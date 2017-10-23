@@ -1,0 +1,23 @@
+{
+  "name": "news-portal",
+  "version": "1.0.0",
+  "description": "web server to store/view a news records",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/easy-lad/news-portal.git"
+  },
+  "author": "Denis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/easy-lad/news-portal/issues"
+  },
+  "homepage": "https://github.com/easy-lad/news-portal#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2"
+  }
+}
