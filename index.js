@@ -1,4 +1,3 @@
-
 const express    = require('express');
 const bodyParser = require('body-parser');
 
@@ -8,37 +7,28 @@ const store  = newsStore({title:'test entry', addedBy:'server', summary:'automat
 
 
 server.get('/api/news', (req, res) => {
-    
-    try
-    {
+    try {
         res.status(200).json(store.get('all'));
     }
-    catch (error)
-    {
+    catch (error) {
         res.status(500).send(error);
     }
 });
 
 server.get('/api/news/:id', (req, res) => {
-    
-    try
-    {
+    try {
         res.status(200).json(store.get(req.params.id));
     }
-    catch (error)
-    {
+    catch (error) {
         res.status(404).send(error);
     }
 });
 
 server.post('/api/news', bodyParser.json(), (req, res) => {
-    
-    try
-    {
+    try {
         res.status(200).send(store.add(req.body))
     }
-    catch (error)
-    {
+    catch (error) {
         res.status(500).send(error);
     }
 });
@@ -46,24 +36,20 @@ server.post('/api/news', bodyParser.json(), (req, res) => {
 server.listen(port, () => console.log(`The server is listening on port ${port}.`));
 
 
-
-function newsStore(firstEntry)
-{
-    const store = [], output = {};
+function newsStore(firstEntry) {
+    const store = [];
+    const output = {};
     
-    output.get = function(id)
-    {
+    output.get = function(id) {
         if (id === 'all') return store;
         
         const index = Number(id);
-        
         if (index in store) return store[index];
         
         throw `No entry with ID="${id}" is found.`;
     }
     
-    output.add = function(fields)
-    {
+    output.add = function(fields) {
         const entry = {};
         
         entry._id      = store.length;
