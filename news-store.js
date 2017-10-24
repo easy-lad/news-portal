@@ -8,14 +8,7 @@ module.exports = class {
     }
     
     get (id) {
-        const index = Number(id);
-        const store = this._store;
-        
-        if (id === 'all') return store;
-        
-        if (index in store) return store[index];
-        
-        throw `No entry with ID="${id}" is found.`;
+        return id === 'all' ? this._store : this.getEntry(id);
     }
     
     add (fields) {
@@ -33,5 +26,25 @@ module.exports = class {
         entry.editDate = '';
         
         return `New entry with ID="${store.push(entry) - 1}" has been created.`;
+    }
+    
+    update (id, fields) {
+        const entry = this.getEntry(id);
+        const toUpdate = ['title', 'summary', 'body', 'tags'];
+        
+        toUpdate.forEach(f => f in fields && (entry[f] = fields[f]));
+        entry.editDate = (new Date()).toISOString();
+        entry.editedBy = 'editedBy' in fields ? fields.editedBy : 'anonymous';
+        
+        return `Entry with ID="${id}" has been updated/edited.`;
+    }
+    
+    getEntry (id) {
+        const index = Number(id);
+        const store = this._store;
+        
+        if (index in store) return store[index];
+        
+        throw `No entry with ID="${id}" is found.`;
     }
 }
