@@ -8,7 +8,7 @@ module.exports = class {
     }
     
     get (id) {
-        return id === 'all' ? this._store : this.getEntry(id);
+        return id !== 'all' ? this.getEntry(id) : this._store.filter(e => !('deleteDate' in e));
     }
     
     add (fields) {
@@ -39,12 +39,19 @@ module.exports = class {
         return `Entry with ID="${id}" has been updated/edited.`;
     }
     
+    remove (id) {
+        this.getEntry(id).deleteDate = (new Date()).toISOString();
+        return `Entry with ID="${id}" has been DELETED.`;
+    }
+    
     getEntry (id) {
         const index = Number(id);
         const store = this._store;
         
-        if (index in store) return store[index];
+        if (!(index in store) || 'deleteDate' in store[index]) {
+            throw `No entry with ID="${id}" is found.`;
+        }
         
-        throw `No entry with ID="${id}" is found.`;
+        return store[index];
     }
 }

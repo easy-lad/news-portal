@@ -45,4 +45,13 @@ server.post('/api/news', (req, res) => {
     }
 });
 
+server.delete('/api/news/:id', (req, res) => {
+    try {
+        res.status(200).send(store.remove(req.params.id))
+    }
+    catch (error) {
+        res.status(404).send(error);
+    }
+});
+
 server.listen(port, () => console.log(`The server is listening on port ${port}.`));
