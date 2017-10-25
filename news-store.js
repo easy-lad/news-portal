@@ -18,10 +18,10 @@ module.exports = class {
         
         entry._id = store.length;
         entry.addDate = (new Date()).toISOString();
-        entry.addedBy = 'addedBy' in fields ? fields.addedBy : 'anonymous';
+        entry.addedBy = 'who' in fields ? fields.who : 'anonymous';
         toAdd.forEach((f,k) => (k = f.k, entry[k] = k in fields ? fields[k] : f.d || `no ${k} given`));
         
-        return `New entry with ID="${store.push(entry) - 1}" has been created.`;
+        return `New entry with ID="${store.push(entry) - 1}" has been CREATED.`;
     }
     
     update (id, fields) {
@@ -30,9 +30,9 @@ module.exports = class {
         
         toUpdate.forEach(f => f in fields && (entry[f] = fields[f]));
         entry.editDate = (new Date()).toISOString();
-        entry.editedBy = 'editedBy' in fields ? fields.editedBy : 'anonymous';
+        entry.editedBy = 'who' in fields ? fields.who : 'anonymous';
         
-        return `Entry with ID="${id}" has been updated/edited.`;
+        return `Entry with ID="${id}" has been UPDATED.`;
     }
     
     remove (id) {

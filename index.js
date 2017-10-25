@@ -4,7 +4,7 @@ const NewsStore  = require('./news-store.js');
 
 const port   = 8888;
 const server = express();
-const store  = new NewsStore({title:'test entry', addedBy:'server', summary:'automatically created for test purposes'});
+const store  = new NewsStore({title:'test entry', summary:'automatically created for test purposes', who:'server'});
 
 
 server.use('/api/news', bodyParser.json());
