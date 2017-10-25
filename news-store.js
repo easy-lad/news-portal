@@ -14,7 +14,7 @@ module.exports = class {
     add (fields) {
         const entry = {};
         const store = this._store;
-        const toAdd = [{k:'title'}, {k:'summary'}, {k:'body'}, {k:'tags', d:[]}];  /* array of {Key [,Default]} */
+        const toAdd = [{k:'title'}, {k:'summary'}, {k:'body'}, {k:'tags', d:[]}];  // {key:foo [,default:bar]}
         
         entry._id = store.length;
         entry.addDate = (new Date()).toISOString();
@@ -45,7 +45,7 @@ module.exports = class {
         const store = this._store;
         
         if (!(index in store) || 'deleteDate' in store[index]) {
-            throw `No entry with ID="${id}" is found.`;
+            throw {from:this, code:404, text:`No entry with ID="${id}" is found.`};
         }
         
         return store[index];
