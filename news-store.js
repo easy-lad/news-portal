@@ -14,16 +14,12 @@ module.exports = class {
     add (fields) {
         const entry = {};
         const store = this._store;
+        const toAdd = [{k:'title'}, {k:'summary'}, {k:'body'}, {k:'tags', d:[]}];  /* array of {Key [,Default]} */
         
-        entry._id      = store.length;
-        entry.addDate  = (new Date()).toISOString();
-        entry.addedBy  = 'addedBy' in fields ? fields.addedBy : 'anonymous';
-        entry.title    = 'title'   in fields ? fields.title   : 'no title given';
-        entry.summary  = 'summary' in fields ? fields.summary : 'no summary given';
-        entry.body     = 'body'    in fields ? fields.body    : 'no body given';
-        entry.tags     = 'tags'    in fields ? fields.tags    : [];
-        entry.editedBy = '';
-        entry.editDate = '';
+        entry._id = store.length;
+        entry.addDate = (new Date()).toISOString();
+        entry.addedBy = 'addedBy' in fields ? fields.addedBy : 'anonymous';
+        toAdd.forEach((f,k) => (k = f.k, entry[k] = k in fields ? fields[k] : f.d || `no ${k} given`));
         
         return `New entry with ID="${store.push(entry) - 1}" has been created.`;
     }
