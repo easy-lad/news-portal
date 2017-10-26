@@ -5,8 +5,13 @@ module.exports = class {
         for (let i = 0, n = arguments.length; i < n; this.add(arguments[i++]));
     }
     
-    get (id) {
-        return id !== 'all' ? this.getEntry(id) : this._store.filter(e => !('deleteDate' in e));
+    get (id, shortOutput) {
+        const output = id !== 'all' ? [this.getEntry(id)] : this._store.filter(e => !('deleteDate' in e));
+        
+        return !shortOutput ? output : output.map((e) => {
+            const {_id, title, summary} = e;
+            return {_id, title, summary};
+        });
     }
     
     add (fields) {

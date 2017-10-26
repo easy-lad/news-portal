@@ -9,9 +9,9 @@ const store  = new NewsStore({title:'test entry', summary:'automatically created
 
 server.use('/api/news', bodyParser.json());
 
-server.get('/api/news', (req, res) => res.status(200).json(store.get('all')));
+server.get('/api/news', (req, res) => res.status(200).json(store.get('all', 'short' in req.query)));
 
-server.get('/api/news/:id', (req, res) => res.status(200).json(store.get(req.params.id)));
+server.get('/api/news/:id', (req, res) => res.status(200).json(store.get(req.params.id, 'short' in req.query)));
 
 server.put('/api/news/:id', (req, res) => res.status(200).send(store.update(req.params.id, req.body)));
 
