@@ -2,9 +2,7 @@ module.exports = class {
     constructor () {
         this._store = [];
         
-        for (let i = 0, n = arguments.length; i < n; i++) {
-            this.add(arguments[i]);
-        }
+        for (let i = 0, n = arguments.length; i < n; this.add(arguments[i++]));
     }
     
     get (id) {
