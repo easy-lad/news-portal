@@ -1,8 +1,7 @@
 module.exports = class {
-    constructor () {
+    constructor (... args) {
         this._store = [];
-        
-        for (let i = 0, n = arguments.length; i < n; this.add(arguments[i++]));
+        args.forEach((a) => this.add(a));
     }
     
     get (id, shortOutput) {
