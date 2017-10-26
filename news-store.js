@@ -17,7 +17,7 @@ module.exports = class {
         entry._id = store.length;
         entry.addDate = (new Date()).toISOString();
         entry.addedBy = 'who' in fields ? fields.who : 'anonymous';
-        toAdd.forEach((f,k) => (k = f.k, entry[k] = k in fields ? fields[k] : f.d || `no ${k} given`));
+        toAdd.forEach((f,k) => entry[k = f.k] = k in fields ? fields[k] : f.d || `no ${k} given`);
         
         return `New entry with ID="${store.push(entry) - 1}" has been CREATED.`;
     }
