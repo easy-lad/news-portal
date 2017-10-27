@@ -1,13 +1,12 @@
-const express    = require('express');
-const bodyParser = require('body-parser');
-const NewsStore  = require('./news-store.js');
+const express   = require('express');
+const NewsStore = require('./news-store.js');
 
 const port   = 8888;
 const server = express();
 const store  = new NewsStore({title:'test entry', summary:'automatically created for test purposes', who:'server'});
 
 
-server.use('/api/news', bodyParser.json());
+server.use('/api/news', express.json());  // Using a built-in middleware to parse JSON body.
 
 server.get('/api/news', (req, res) => res.status(200).json(store.get('all', 'short' in req.query)));
 
