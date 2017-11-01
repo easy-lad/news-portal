@@ -17,7 +17,15 @@ class NewsMongodb {
     }
     
     add (fields) {
-        return this._ModelEntry.create({}).then(() => 'new entry has been created', () => {throw {code:500, text:'MongoDB failed'}});
+        const doc = {};
+        const toAdd = {title:null, summary:null, body:null, tags:null};  // {fieldsKey:docKey, ...}
+        
+        Object.keys(toAdd).forEach(k => k in fields && (doc[toAdd[k] || k] = fields[k]));
+        
+        return this._ModelEntry.create(doc).then(
+            entry => `New entry with ID="${entry._id}" has been CREATED.`,
+            error => {throw {code: 500, text: `${error.name}: ${error.message}`}}
+        );
     }
 }
 
