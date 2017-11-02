@@ -27,8 +27,8 @@ class NewsMongodb {
         Object.keys(toAdd).forEach(k => k in fields && (doc[toAdd[k] || k] = fields[k]));
         
         return this._ModelEntry.create(doc).then(
-            entry => `New entry with ID="${entry._id}" has been CREATED.`,
-            error => {throw {code: 500, text: `${error.name}: ${error.message}`}}
+            entry => {return {httpCode: 201, output: `New entry with ID="${entry._id}" has been CREATED.`}},
+            error => {return {httpCode: 500, output: `${error.name}: ${error.message}`}}
         );
     }
 }
