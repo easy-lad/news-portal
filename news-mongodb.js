@@ -18,8 +18,8 @@ class NewsMongodb {
     }
     
     add (fields) {
-        const {title, summary, body, tags} = typeof fields === 'object' ? fields : {};
-        const doc = {title, summary, body, tags};
+        const {title, summary, body, tags, who:addedBy = 'anonymous'} = typeof fields === 'object' ? fields : {};
+        const doc = {title, summary, body, tags, addedBy};
         
         return this._ModelEntry.create(doc).then(
             entry => {return {httpCode: 201, output: `New entry with ID="${entry._id}" has been CREATED.`}},
@@ -29,10 +29,16 @@ class NewsMongodb {
 }
 
 NewsMongodb.NEWS_ENTRY_SCHEMA = new mongoose.Schema({
-    title   : {type: String,   default: 'no title given'  },
-    summary : {type: String,   default: 'no summary given'},
-    body    : {type: String,   default: 'no body given'   },
-    tags    : {type: [String], default: []                }
+    title      : {type: String,   default:  'no title given'  },
+    summary    : {type: String,   default:  'no summary given'},
+    body       : {type: String,   default:  'no body given'   },
+    tags       : {type: [String], default:  []                },
+    addDate    : {type: Date,     default:  Date.now          },
+    addedBy    : {type: String,   required: true              },
+    editDate   : Date,
+    editedBy   : String,
+    deleteDate : Date,
+    deletedBy  : String
 });
 
 module.exports = NewsMongodb;
