@@ -12,8 +12,12 @@ mongoose.Promise = Promise;
 
 class NewsMongodb {
     constructor (settings) {
-        const c = mongoose.createConnection(`mongodb://localhost:8008/test`, {useMongoClient:true});
-        this._ModelEntry = c.model('NewsEntry', NewsMongodb.NEWS_ENTRY_SCHEMA);
+        const {host='127.0.0.1', port=8080, dbName='test'} = typeof settings === 'object' ? settings : {};
+        const connectString = `mongodb://${host}:${port}/${dbName}`;
+        const connect = mongoose.createConnection(connectString, {useMongoClient:true});
+        
+        this._ModelEntry = connect.model('NewsEntry', NewsMongodb.NEWS_ENTRY_SCHEMA);
+        connect.then(() => console.log('Connected to ' + connectString), e => console.log(String(e)));
     }
     
     add (fields) {
