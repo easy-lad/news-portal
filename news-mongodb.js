@@ -21,10 +21,8 @@ class NewsMongodb {
     }
     
     add (fields) {
-        const doc = {};
-        const toAdd = {title:null, summary:null, body:null, tags:null};  // {fieldsKey:docKey, ...}
-        
-        Object.keys(toAdd).forEach(k => k in fields && (doc[toAdd[k] || k] = fields[k]));
+        const {title, summary, body, tags} = typeof fields === 'object' ? fields : {};
+        const doc = {title, summary, body, tags};
         
         return this._ModelEntry.create(doc).then(
             entry => {return {httpCode: 201, output: `New entry with ID="${entry._id}" has been CREATED.`}},
