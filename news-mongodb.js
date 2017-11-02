@@ -1,8 +1,5 @@
 const mongoose = require('mongoose');
 
-const ObjectId = mongoose.Types.ObjectId;
-const objectId = mongoose.Schema.Types.ObjectId;
-
 /*
  *  Forcing Mongoose to use the native promise API;
  *  otherwise, it would use its default promise library "mpromise" that it declares deprecated as of this writing.
@@ -32,7 +29,6 @@ class NewsMongodb {
 }
 
 NewsMongodb.NEWS_ENTRY_SCHEMA = new mongoose.Schema({
-    _id     : {type: objectId, default: ObjectId          },
     title   : {type: String,   default: 'no title given'  },
     summary : {type: String,   default: 'no summary given'},
     body    : {type: String,   default: 'no body given'   },
