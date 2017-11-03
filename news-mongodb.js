@@ -22,7 +22,7 @@ class NewsMongodb {
         const doc = {title, summary, body, tags, addedBy};
         
         return this._ModelEntry.create(doc).then(
-            doc => {return {httpCode: 201, output: `New entry with ID="${doc._id}" has been CREATED.`}},
+            doc => this.response(201, `New entry with ID="${doc._id}" has been CREATED.`),
             err => this.error500(err)
         );
     }
@@ -33,7 +33,7 @@ class NewsMongodb {
                 doc.deletedBy = 'anonymous';
                 doc.deleteDate = Date.now();
                 return doc.save().then(
-                    doc => {return {httpCode: 200, output: `Entry with ID="${doc._id}" has been DELETED.`}},
+                    doc => this.response(200, `Entry with ID="${doc._id}" has been DELETED.`),
                     err => this.error500(err)
                 );
             },
@@ -44,7 +44,7 @@ class NewsMongodb {
     getDoc (id) {
         return this._ModelEntry.find({_id:id}).exec().then(
             docs => {
-                if (!docs.length) throw {httpCode: 404, output: `No entry with ID="${id}" is found.`}
+                if (!docs.length) throw this.response(404, `No entry with ID="${id}" is found.`);
                 
                 return docs[0];
             },
@@ -53,7 +53,11 @@ class NewsMongodb {
     }
     
     error500 (e) {
-        return {httpCode:500, output:`${e.name}: ${e.message}`};
+        return this.response(500, `${e.name}: ${e.message}`);
+    }
+    
+    response (code, data) {
+        return {httpCode:code, output:data};
     }
 }
 
