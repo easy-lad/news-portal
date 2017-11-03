@@ -1,13 +1,13 @@
-module.exports = class {
-    constructor (... args) {
+class NewsStore {
+    constructor (...args) {
         this._store = [];
-        args.forEach((a) => this.add(a));
+        args.forEach(a => this.add(a));
     }
     
     get (id, shortOutput) {
         const output = id !== 'all' ? [this.getEntry(id)] : this._store.filter(e => !('deleteDate' in e));
         
-        return !shortOutput ? output : output.map((e) => {
+        return !shortOutput ? output : output.map(e => {
             const {_id, title, summary} = e;
             return {_id, title, summary};
         });
@@ -16,12 +16,12 @@ module.exports = class {
     add (fields) {
         const entry = {};
         const store = this._store;
-        const toAdd = [{k:'title'}, {k:'summary'}, {k:'body'}, {k:'tags', d:[]}];  // {key:foo [,default:bar]}
+        const toAdd = {title:null, summary:null, body:null, tags:[]};  // key:default
         
         entry._id = store.length;
         entry.addDate = (new Date()).toISOString();
         entry.addedBy = 'who' in fields ? fields.who : 'anonymous';
-        toAdd.forEach((f,k) => entry[k = f.k] = k in fields ? fields[k] : f.d || `no ${k} given`);
+        Object.keys(toAdd).forEach(k => entry[k] = k in fields ? fields[k] : toAdd[k] || `No "${k}" given.`);
         
         return `New entry with ID="${store.push(entry) - 1}" has been CREATED.`;
     }
@@ -30,7 +30,7 @@ module.exports = class {
         const entry = this.getEntry(id);
         const toUpdate = ['title', 'summary', 'body', 'tags'];
         
-        toUpdate.forEach(f => f in fields && (entry[f] = fields[f]));
+        toUpdate.forEach(k => k in fields && (entry[k] = fields[k]));
         entry.editDate = (new Date()).toISOString();
         entry.editedBy = 'who' in fields ? fields.who : 'anonymous';
         
@@ -53,3 +53,5 @@ module.exports = class {
         return store[index];
     }
 }
+
+module.exports = NewsStore;
