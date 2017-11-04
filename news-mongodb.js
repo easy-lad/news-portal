@@ -27,11 +27,30 @@ class NewsMongodb {
         );
     }
     
+    update (id, fields) {
+        return this.getDoc(id).then(
+            doc => {
+                const {title, summary, body, tags, who:editedBy = 'anonymous'} = typeof fields === 'object' ? fields : {};
+                const toUpdate = {title, summary, body, tags, editedBy};
+                
+                Object.keys(toUpdate).forEach(k => toUpdate[k] !== undefined && (doc[k] = toUpdate[k]));
+                doc.editDate = Date.now();
+                
+                return doc.save().then(
+                    doc => this.response(200, `Entry with ID="${doc._id}" has been UPDATED.`),
+                    err => this.error500(err)
+                );
+            },
+            err => err
+        );
+    }
+    
     remove (id) {
         return this.getDoc(id).then(
             doc => {
                 doc.deletedBy = 'anonymous';
                 doc.deleteDate = Date.now();
+                
                 return doc.save().then(
                     doc => this.response(200, `Entry with ID="${doc._id}" has been DELETED.`),
                     err => this.error500(err)
