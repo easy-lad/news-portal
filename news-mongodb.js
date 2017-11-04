@@ -18,10 +18,7 @@ class NewsMongodb {
     }
     
     add (fields) {
-        const {title, summary, body, tags, who:addedBy = 'anonymous'} = typeof fields === 'object' ? fields : {};
-        const doc = {title, summary, body, tags, addedBy};
-        
-        return this._ModelEntry.create(doc).then(
+        return this._ModelEntry.create(this.updateWith(fields, 'addedBy')).then(
             doc => this.response(201, `New entry with ID="${doc._id}" has been CREATED.`),
             err => this.error500(err)
         );
@@ -30,10 +27,8 @@ class NewsMongodb {
     update (id, fields) {
         return this.getDoc(id).then(
             doc => {
-                const {title, summary, body, tags, who:editedBy = 'anonymous'} = typeof fields === 'object' ? fields : {};
-                const toUpdate = {title, summary, body, tags, editedBy};
-                
-                Object.keys(toUpdate).forEach(k => toUpdate[k] !== undefined && (doc[k] = toUpdate[k]));
+                fields = this.updateWith(fields, 'editedBy');
+                Object.keys(fields).forEach(k => fields[k] !== undefined && (doc[k] = fields[k]));
                 doc.editDate = Date.now();
                 
                 return doc.save().then(
@@ -64,11 +59,15 @@ class NewsMongodb {
         return this._ModelEntry.find({_id:id}).exec().then(
             docs => {
                 if (!docs.length) throw this.response(404, `No entry with ID="${id}" is found.`);
-                
                 return docs[0];
             },
             err => {throw this.error500(err)}
         );
+    }
+    
+    updateWith (fields, keyWho) {
+        const {title, summary, body, tags, who = 'anonymous'} = typeof fields === 'object' ? fields : {};
+        return {title, summary, body, tags, [keyWho]:who};
     }
     
     error500 (e) {
