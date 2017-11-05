@@ -14,7 +14,8 @@ function createRouter (settings) {
     
     // Read
     router.get('/', (req, res, next) => {
-        res.status(501).send('GETing from MongoDB is to be implemented.');
+        res.locals.promise = db.get(req.query);
+        next();
     });
     
     // Update

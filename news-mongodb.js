@@ -17,6 +17,21 @@ class NewsMongodb {
         connect.then(() => console.log('Connected to ' + connectString), e => console.log(String(e)));
     }
     
+    get (query) {
+        const objQuery = {deleteDate:null};
+        const projection = 'short' in query ? '_id title summary' : '-__v';  // inclusive and exclusive projections
+        const result = {};
+        
+        return this._ModelEntry.find(objQuery, projection).lean().exec().then(
+            docs => {
+                result.page = docs;
+                result.totalEntries = docs.length;
+                return this.response(200, result);
+            },
+            err => this.error500(err)
+        );
+    }
+    
     add (fields) {
         return this._ModelEntry.create(this.updateWith(fields, 'addedBy')).then(
             doc => this.response(201, `New entry with ID="${doc._id}" has been CREATED.`),
