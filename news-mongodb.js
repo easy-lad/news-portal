@@ -56,7 +56,7 @@ class NewsMongodb {
     }
     
     getDoc (id) {
-        return this._ModelEntry.find({_id:id}).exec().then(
+        return this._ModelEntry.find({_id:id, deleteDate:null}).exec().then(
             docs => {
                 if (!docs.length) throw this.response(404, `No entry with ID="${id}" is found.`);
                 return docs[0];
