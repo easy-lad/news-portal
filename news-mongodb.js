@@ -22,6 +22,9 @@ class NewsMongodb {
         const projection = 'short' in query ? '_id title summary' : '-__v';  // inclusive and exclusive projections
         const result = {};
         
+        'addedBy' in query && (objQuery.addedBy = query.addedBy);
+        'editedBy' in query && (objQuery.editedBy = query.editedBy);
+        
         return this._ModelEntry.find(objQuery, projection).lean().exec().then(
             docs => {
                 result.page = docs;
