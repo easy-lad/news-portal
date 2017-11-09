@@ -17,15 +17,24 @@ class NewsMongodb {
         connect.then(() => console.log('Connected to ' + connectString), e => console.log(String(e)));
     }
     
-    get (query) {
-        const objQuery = {deleteDate:null};
-        const projection = 'short' in query ? '_id title summary' : '-__v';  // inclusive and exclusive projections
+    get (urlQuery) {
+        const query = {deleteDate:null};
+        const projection = 'short' in urlQuery ? '_id title summary' : '-__v';  // inclusive and exclusive projections
         const result = {};
         
-        'addedBy' in query && (objQuery.addedBy = query.addedBy);
-        'editedBy' in query && (objQuery.editedBy = query.editedBy);
+        'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
+        'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
         
-        return this._ModelEntry.find(objQuery, projection).lean().exec().then(
+        try {
+            this.addDateQuery(urlQuery, 'addDate', query);
+            this.addDateQuery(urlQuery, 'editDate', query);
+        }
+        catch (error) {
+            if (error instanceof Promise) return error;
+            throw error;
+        }
+        
+        return this._ModelEntry.find(query, projection).lean().exec().then(
             docs => {
                 result.page = docs;
                 result.totalEntries = docs.length;
@@ -71,6 +80,34 @@ class NewsMongodb {
             },
             err => err
         );
+    }
+    
+    addDateQuery (urlQuery, key, outQuery) {
+        let gDate, lDate, clause = {};
+        
+        if (gDate = urlQuery[key + 'Gte']) {
+            clause.$gte = this.parseDate(gDate);
+        }
+        else if (gDate = urlQuery[key + 'Gt']) {
+            clause.$gt = this.parseDate(gDate);
+        }
+        if (lDate = urlQuery[key + 'Lte']) {
+            clause.$lte = this.parseDate(lDate);
+        }
+        else if (lDate = urlQuery[key + 'Lt']) {
+            clause.$lt = this.parseDate(lDate);
+        }
+        if (gDate || lDate) outQuery[key] = clause;
+    }
+    
+    parseDate (string) {
+        try {
+            return (new Date(string)).toISOString();
+        }
+        catch (error) {
+            const m = `Date string "${string}" could not be parsed due to ${error.name}:${error.message}.`;
+            throw Promise.resolve(this.response(400, m));
+        }
     }
     
     getDoc (id) {
