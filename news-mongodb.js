@@ -44,8 +44,16 @@ class NewsMongodb {
     }
     
     add (fields) {
-        return this._ModelEntry.create(this.updateWith(fields, 'addedBy')).then(
-            doc => this.response(201, `New entry with ID="${doc._id}" has been CREATED.`),
+        return this._ModelEntry.count({}).exec().then(
+            count => {
+                const doc = this.updateWith(fields, 'addedBy');
+                doc.sid = count + 1;  // sid starts at 1
+                
+                return this._ModelEntry.create(doc).then(
+                    doc => this.response(201, `New entry with SID=${doc.sid} & ID=${doc._id} has been CREATED.`),
+                    err => this.error(500, err)
+                );
+            },
             err => this.error(500, err)
         );
     }
@@ -141,6 +149,7 @@ class NewsMongodb {
 NewsMongodb.CLASS_ID = Symbol('Unique ID of NewsMongodb class');
 
 NewsMongodb.NEWS_ENTRY_SCHEMA = new mongoose.Schema({
+    sid        : {type: Number,   required: true              },  // sid stands for sequential identifier
     title      : {type: String,   default:  'no title given'  },
     summary    : {type: String,   default:  'no summary given'},
     body       : {type: String,   default:  'no body given'   },
