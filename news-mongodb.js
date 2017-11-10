@@ -50,7 +50,7 @@ class NewsMongodb {
                 doc.sid = count + 1;  // sid starts at 1
                 
                 return this._ModelEntry.create(doc).then(
-                    doc => this.response(201, `New entry with SID=${doc.sid} & ID=${doc._id} has been CREATED.`),
+                    doc => this.response(201, `New entry with SID=${doc.sid} & _ID=${doc._id} has been CREATED.`),
                     err => this.error(500, err)
                 );
             },
@@ -66,7 +66,7 @@ class NewsMongodb {
                 doc.editDate = Date.now();
                 
                 return doc.save().then(
-                    doc => this.response(200, `Entry with ID="${doc._id}" has been UPDATED.`),
+                    doc => this.response(200, `Entry with SID=${doc.sid} & _ID=${doc._id} has been UPDATED.`),
                     err => this.error(500, err)
                 );
             }
@@ -80,7 +80,7 @@ class NewsMongodb {
                 doc.deleteDate = Date.now();
                 
                 return doc.save().then(
-                    doc => this.response(200, `Entry with ID="${doc._id}" has been DELETED.`),
+                    doc => this.response(200, `Entry with SID=${doc.sid} & _ID=${doc._id} has been DELETED.`),
                     err => this.error(500, err)
                 );
             }
@@ -123,13 +123,19 @@ class NewsMongodb {
     }
     
     getDoc (id) {
-        return this._ModelEntry.find({_id:id, deleteDate:null}).exec().then(
+        const idKey = this.idKey(id);
+        
+        return this._ModelEntry.find({[idKey]:id, deleteDate:null}).exec().then(
             docs => {
-                if (!docs.length) this.error(404, `No entry with ID="${id}" is found.`);
+                if (!docs.length) this.error(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
                 return docs[0];
             },
             err => this.error(500, err)
         );
+    }
+    
+    idKey (id) {
+        return id.length === 24 ? '_id' : 'sid';
     }
     
     updateWith (fields, keyWho) {
