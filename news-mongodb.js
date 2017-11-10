@@ -29,6 +29,7 @@ class NewsMongodb {
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
         'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
         
+        this.addTagsQuery(urlQuery, query);
         this.addDateQuery(urlQuery, 'addDate', query);
         this.addDateQuery(urlQuery, 'editDate', query);
         
@@ -76,6 +77,14 @@ class NewsMongodb {
                 );
             }
         );
+    }
+    
+    addTagsQuery(urlQuery, outQuery) {
+        let tags = urlQuery.tag;
+        
+        if (typeof tags === 'string' ? (tags = [tags]) : Array.isArray(tags)) {
+            outQuery.tags = {['anyTags' in urlQuery ? '$in' : '$all']:tags};
+        }
     }
     
     addDateQuery (urlQuery, key, outQuery) {
