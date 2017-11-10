@@ -17,6 +17,10 @@ class NewsMongodb {
         connect.then(() => console.log('Connected to ' + connectString), e => console.log(String(e)));
     }
     
+    static isOwn (x) {
+        return typeof x === 'object' && this.CLASS_ID in x;
+    }
+    
     get (urlQuery) {
         const query = {deleteDate:null};
         const projection = 'short' in urlQuery ? '_id title summary' : '-__v';  // inclusive and exclusive projections
@@ -25,14 +29,8 @@ class NewsMongodb {
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
         'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
         
-        try {
-            this.addDateQuery(urlQuery, 'addDate', query);
-            this.addDateQuery(urlQuery, 'editDate', query);
-        }
-        catch (error) {
-            if (error instanceof Promise) return error;
-            throw error;
-        }
+        this.addDateQuery(urlQuery, 'addDate', query);
+        this.addDateQuery(urlQuery, 'editDate', query);
         
         return this._ModelEntry.find(query, projection).lean().exec().then(
             docs => {
@@ -40,14 +38,14 @@ class NewsMongodb {
                 result.totalEntries = docs.length;
                 return this.response(200, result);
             },
-            err => this.error500(err)
+            err => this.error(500, err)
         );
     }
     
     add (fields) {
         return this._ModelEntry.create(this.updateWith(fields, 'addedBy')).then(
             doc => this.response(201, `New entry with ID="${doc._id}" has been CREATED.`),
-            err => this.error500(err)
+            err => this.error(500, err)
         );
     }
     
@@ -60,10 +58,9 @@ class NewsMongodb {
                 
                 return doc.save().then(
                     doc => this.response(200, `Entry with ID="${doc._id}" has been UPDATED.`),
-                    err => this.error500(err)
+                    err => this.error(500, err)
                 );
-            },
-            err => err
+            }
         );
     }
     
@@ -75,10 +72,9 @@ class NewsMongodb {
                 
                 return doc.save().then(
                     doc => this.response(200, `Entry with ID="${doc._id}" has been DELETED.`),
-                    err => this.error500(err)
+                    err => this.error(500, err)
                 );
-            },
-            err => err
+            }
         );
     }
     
@@ -105,18 +101,17 @@ class NewsMongodb {
             return (new Date(string)).toISOString();
         }
         catch (error) {
-            const m = `Date string "${string}" could not be parsed due to ${error.name}:${error.message}.`;
-            throw Promise.resolve(this.response(400, m));
+            this.error(400, `Date string "${string}" could not be parsed due to ${error.name}:${error.message}.`);
         }
     }
     
     getDoc (id) {
         return this._ModelEntry.find({_id:id, deleteDate:null}).exec().then(
             docs => {
-                if (!docs.length) throw this.response(404, `No entry with ID="${id}" is found.`);
+                if (!docs.length) this.error(404, `No entry with ID="${id}" is found.`);
                 return docs[0];
             },
-            err => {throw this.error500(err)}
+            err => this.error(500, err)
         );
     }
     
@@ -125,14 +120,16 @@ class NewsMongodb {
         return {title, summary, body, tags, [keyWho]:who};
     }
     
-    error500 (e) {
-        return this.response(500, `${e.name}: ${e.message}`);
+    error (code, error) {
+        throw this.response(code, error instanceof Error ? `${error.name}: ${error.message}` : error);
     }
     
     response (code, data) {
-        return {httpCode:code, output:data};
+        return {httpCode:code, output:data, [NewsMongodb.CLASS_ID]:this};
     }
 }
+
+NewsMongodb.CLASS_ID = Symbol('Unique ID of NewsMongodb class');
 
 NewsMongodb.NEWS_ENTRY_SCHEMA = new mongoose.Schema({
     title      : {type: String,   default:  'no title given'  },

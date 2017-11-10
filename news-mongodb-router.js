@@ -35,6 +35,10 @@ function createRouter (settings) {
         !p ? next() : p.then(v => res.status(v.httpCode).json(v), r => next(r));
     });
     
+    router.use('/', (err, req, res, next) => {
+        NewsMongodb.isOwn(err) ? res.status(err.httpCode).json(err) : next(err);
+    });
+    
     return router;
 }
 
