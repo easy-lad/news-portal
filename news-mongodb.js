@@ -23,7 +23,7 @@ class NewsMongodb {
     
     get (urlQuery) {
         const query = {deleteDate:null};
-        const projection = 'short' in urlQuery ? '_id title summary' : '-__v';  // inclusive and exclusive projections
+        const projection = 'short' in urlQuery ? '_id sid title summary' : '-__v';  // inclusive and exclusive projections
         const result = {};
         
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
