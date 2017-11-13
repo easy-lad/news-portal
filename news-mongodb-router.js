@@ -18,6 +18,13 @@ function createRouter (settings) {
         next();
     });
     
+    // Read
+    router.get('/:id', (req, res, next) => {
+        req.query.id = req.params.id;
+        res.locals.promise = db.get(req.query);
+        next();
+    });
+    
     // Update
     router.put('/:id', (req, res, next) => {
         res.locals.promise = db.update(req.params.id, req.body);
