@@ -29,9 +29,10 @@ class NewsMongodb {
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
         'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
         
-        this.addTagsQuery(urlQuery, query);
-        this.addDateQuery(urlQuery, 'addDate', query);
-        this.addDateQuery(urlQuery, 'editDate', query);
+        this.addQueryId(urlQuery, query);
+        this.addQueryTags(urlQuery, query);
+        this.addQueryDate(urlQuery, 'addDate', query);
+        this.addQueryDate(urlQuery, 'editDate', query);
         
         return this._ModelEntry.find(query, projection).lean().exec().then(
             docs => {
@@ -87,7 +88,15 @@ class NewsMongodb {
         );
     }
     
-    addTagsQuery(urlQuery, outQuery) {
+    addQueryId (input, query) {
+        if (typeof input === 'string' || (input = input.id)) {
+            const key = input.length === 24 ? '_id' : 'sid';
+            query[key] = input;
+            return key;
+        }
+    }
+    
+    addQueryTags (urlQuery, outQuery) {
         let tags = urlQuery.tag;
         
         if (typeof tags === 'string' ? (tags = [tags]) : Array.isArray(tags)) {
@@ -95,7 +104,7 @@ class NewsMongodb {
         }
     }
     
-    addDateQuery (urlQuery, key, outQuery) {
+    addQueryDate (urlQuery, key, outQuery) {
         let gDate, lDate, clause = {};
         
         if (gDate = urlQuery[key + 'Gte']) {
@@ -123,19 +132,15 @@ class NewsMongodb {
     }
     
     getDoc (id) {
-        const idKey = this.idKey(id);
+        const query = {deleteDate:null}, idKey = this.addQueryId(id, query);
         
-        return this._ModelEntry.find({[idKey]:id, deleteDate:null}).exec().then(
+        return this._ModelEntry.find(query).exec().then(
             docs => {
                 if (!docs.length) this.error(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
                 return docs[0];
             },
             err => this.error(500, err)
         );
-    }
-    
-    idKey (id) {
-        return id.length === 24 ? '_id' : 'sid';
     }
     
     updateWith (fields, keyWho) {
