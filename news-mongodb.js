@@ -24,7 +24,6 @@ class NewsMongodb {
     get (urlQuery) {
         const query = {deleteDate:null};
         const projection = 'short' in urlQuery ? '_id sid title summary' : '-__v';  // inclusive and exclusive projections
-        const result = {};
         
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
         'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
@@ -34,12 +33,15 @@ class NewsMongodb {
         this.addQueryDate(urlQuery, 'addDate', query);
         this.addQueryDate(urlQuery, 'editDate', query);
         
-        return this._ModelEntry.find(query, projection).lean().exec().then(
-            docs => {
-                result.page = docs;
-                result.totalEntries = docs.length;
-                return this.response(200, result);
-            },
+        const size = Number(urlQuery.pageSize) || 10;
+        const offset = Number(urlQuery.pageOffset) || 0;
+        const mQuery = this._ModelEntry.find(query, projection).skip(offset).limit(size).sort('-addDate');
+        
+        return mQuery.lean().exec().then(
+            docs => this._ModelEntry.count(query).exec().then(
+                count => this.response(200, {page:docs, totalEntries:count}),
+                err => this.error(500, err)
+            ),
             err => this.error(500, err)
         );
     }
