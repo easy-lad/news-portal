@@ -1,3 +1,29 @@
 {
-    "extends": "airbnb-base"
+    "extends": "airbnb-base",
+    "env": {"node": true},
+    "rules": {
+        "no-console": 0,
+        "no-param-reassign": 0,
+        "no-return-assign": 0,
+        "class-methods-use-this": 0,
+        "no-underscore-dangle": 0,
+        "comma-dangle": [
+            "error",
+            {
+                "arrays": "only-multiline",
+                "objects": "only-multiline",
+                "imports": "only-multiline",
+                "exports": "only-multiline",
+                "functions": "never"
+            }
+        ],
+        // Below are my personal preferences.
+        "brace-style": ["error", "stroustrup"],
+        "indent": ["error", 4],
+        "key-spacing": ["error", {"align": {"on": "colon"}}],
+        "no-cond-assign": ["error", "except-parens"],
+        "no-multi-spaces": ["error", {"ignoreEOLComments": true, "exceptions": {"VariableDeclarator": true}}],
+        "no-unused-expressions": ["error", {"allowShortCircuit": true, "allowTernary": true}],
+        "object-curly-newline": ["error", {"ObjectExpression": {"minProperties": 9}, "ObjectPattern": {"minProperties": 9}}]
+    }
 }
