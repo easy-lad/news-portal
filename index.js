@@ -5,8 +5,8 @@ const mongoRouter = require('./news-mongodb-router.js');
 const port   = 8888;
 const server = express();
 
-const mongoSettings  = {port:8008, dbName:'newsPortal'};
-const mongoSettings2 = {port:8008, dbName:'newsPortal2'};
+const mongoSettings  = { port: 8008, dbName: 'newsPortal' };
+const mongoSettings2 = { port: 8008, dbName: 'newsPortal2' };
 
 
 server.use('/api/news', express.json());  // Using a built-in middleware to parse JSON body.
