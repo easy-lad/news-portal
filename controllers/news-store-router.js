@@ -1,5 +1,5 @@
 const express   = require('express');
-const NewsStore = require('./news-store.js');
+const NewsStore = require('../services/news-store.js');
 
 
 function createRouter() {

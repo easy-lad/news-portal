@@ -1,6 +1,6 @@
 const express     = require('express');
-const storeRouter = require('./news-store-router.js');
-const mongoRouter = require('./news-mongodb-router.js');
+const storeRouter = require('./controllers/news-store-router.js');
+const mongoRouter = require('./controllers/news-mongodb-router.js');
 
 const port   = 8888;
 const server = express();

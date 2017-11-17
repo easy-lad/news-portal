@@ -1,5 +1,5 @@
 const express     = require('express');
-const NewsMongodb = require('./news-mongodb.js');
+const NewsMongodb = require('../services/news-mongodb.js');
 
 
 function createRouter(settings) {
