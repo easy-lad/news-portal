@@ -1,7 +1,7 @@
 class NewsStore {
     constructor(...args) {
         this._store = [];
-        args.forEach(a => this.add(a));
+        args.forEach(a => this.add(a, { name: a.who }));
     }
 
     get(id, shortOutput) {
@@ -13,26 +13,26 @@ class NewsStore {
         });
     }
 
-    add(fields) {
+    add(fields, user) {
         const entry = {};
         const store = this._store;
         const toAdd = { title: null, summary: null, body: null, tags: [] };  // key:default
 
         entry._id = store.length;
         entry.addDate = (new Date()).toISOString();
-        entry.addedBy = 'who' in fields ? fields.who : 'anonymous';
+        entry.addedBy = user.name;
         Object.keys(toAdd).forEach(k => entry[k] = k in fields ? fields[k] : toAdd[k] || `No "${k}" given.`);
 
         return `New entry with ID="${store.push(entry) - 1}" has been CREATED.`;
     }
 
-    update(id, fields) {
+    update(id, fields, user) {
         const entry = this.getEntry(id);
         const toUpdate = ['title', 'summary', 'body', 'tags'];
 
         toUpdate.forEach(k => k in fields && (entry[k] = fields[k]));
         entry.editDate = (new Date()).toISOString();
-        entry.editedBy = 'who' in fields ? fields.who : 'anonymous';
+        entry.editedBy = user.name;
 
         return `Entry with ID="${id}" has been UPDATED.`;
     }
@@ -40,6 +40,13 @@ class NewsStore {
     remove(id) {
         this.getEntry(id).deleteDate = (new Date()).toISOString();
         return `Entry with ID="${id}" has been DELETED.`;
+    }
+
+    authenticate(username, password) {
+        console.log(`STUB NewsStore#authenticate(${username},${password}) : store.length=${this._store.length}`);
+        if (username === 'admin') return Promise.resolve({ name: username });
+        const error = { from: this, code: 401, text: `User "${username}" is not allowed to access the portal.` };
+        return Promise.reject(error);
     }
 
     getEntry(id) {

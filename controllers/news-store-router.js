@@ -1,14 +1,38 @@
-const express   = require('express');
-const NewsStore = require('../services/news-store.js');
+const express      = require('express');
+const { Passport } = require('passport');
+const Strategy     = require('passport-http').BasicStrategy;
+const NewsStore    = require('../services/news-store.js');
 
 
 function createRouter() {
-    const router = express.Router();
-    const store = new NewsStore({ title: 'test entry', summary: 'automatically created for test purposes', who: 'server' });
+    const router   = express.Router();
+    const store    = new NewsStore({ title: 'test entry', summary: 'automatically created for test purposes', who: 'server' });
+    const passport = new Passport();
+
+    passport.use(new Strategy((username, password, done) => {
+        const promise = store.authenticate(username, password);
+        promise.then(user => done(null, user), error => done(error));
+    }));
+
+    router.use('/', passport.initialize());
+
+    router.use('/', (req, res, next) => {
+        function handler(error, user) {
+            if (error || !user) {
+                res.set('www-authenticate', 'Basic realm="users"');
+                next(error || { from: store, code: 401, text: 'Apparently, no "authorization" header was provided.' });
+            }
+            else {
+                req.user = user;
+                next();
+            }
+        }
+        passport.authenticate('basic', handler)(req, res, next);
+    });
 
     // Create
     router.post('/', (req, res) => {
-        res.status(201).send(store.add(req.body));
+        res.status(201).send(store.add(req.body, req.user));
     });
 
     // Read
@@ -23,12 +47,12 @@ function createRouter() {
 
     // Update
     router.put('/:id', (req, res) => {
-        res.status(200).send(store.update(req.params.id, req.body));
+        res.status(200).send(store.update(req.params.id, req.body, req.user));
     });
 
     // Delete
     router.delete('/:id', (req, res) => {
-        res.status(200).send(store.remove(req.params.id));
+        res.status(200).send(store.remove(req.params.id, req.user));
     });
 
     router.use('/', (err, req, res, next) => {

@@ -18,7 +18,9 @@
   "homepage": "https://github.com/easy-lad/news-portal#readme",
   "dependencies": {
     "express": "^4.16.2",
-    "mongoose": "^4.12.4"
+    "mongoose": "^4.12.4",
+    "passport": "^0.4.0",
+    "passport-http": "^0.3.0"
   },
   "devDependencies": {
     "eslint": "^4.11.0",
