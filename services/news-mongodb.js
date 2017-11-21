@@ -13,7 +13,8 @@ class NewsMongodb {
         const connectString = `mongodb://${host}:${port}/${dbName}`;
         const connect = mongoose.createConnection(connectString, { useMongoClient: true });
 
-        this._ModelEntry = connect.model('NewsEntry', NewsMongodb.NEWS_ENTRY_SCHEMA);
+        this._ModelNewsEntry = connect.model('NewsEntry', NewsMongodb.SCHEMA_NEWS_ENTRY);
+        this._ModelUserEntry = connect.model('UserEntry', NewsMongodb.SCHEMA_USER_ENTRY);
         connect.then(() => console.log(`Connected to ${connectString}`), e => console.log(String(e)));
     }
 
@@ -35,10 +36,10 @@ class NewsMongodb {
 
         const size = Number(urlQuery.pageSize) || 10;
         const offset = Number(urlQuery.pageOffset) || 0;
-        const mQuery = this._ModelEntry.find(query, projection).skip(offset).limit(size).sort('-addDate');
+        const mQuery = this._ModelNewsEntry.find(query, projection).skip(offset).limit(size).sort('-addDate');
 
         return mQuery.lean().exec().then(
-            docs => this._ModelEntry.count(query).exec().then(
+            docs => this._ModelNewsEntry.count(query).exec().then(
                 count => this.response(200, { page: docs, totalEntries: count }),
                 err => this.error(500, err)
             ),
@@ -47,12 +48,12 @@ class NewsMongodb {
     }
 
     add(fields) {
-        return this._ModelEntry.count({}).exec().then(
+        return this._ModelNewsEntry.count({}).exec().then(
             (count) => {
                 const doc = this.updateWith(fields, 'addedBy');
                 doc.sid = count + 1;  // sid starts at 1
 
-                return this._ModelEntry.create(doc).then(
+                return this._ModelNewsEntry.create(doc).then(
                     cDoc => this.response(201, `New entry with SID=${cDoc.sid} & _ID=${cDoc._id} has been CREATED.`),
                     err => this.error(500, err)
                 );
@@ -86,10 +87,20 @@ class NewsMongodb {
         });
     }
 
-    authenticate(username, password) {
-        console.log(`STUB NewsMongodb#authenticate(${username}, ${password}) ...`);
-        if (username === 'admin') return Promise.resolve({ name: username });
-        return Promise.reject(this.response(401, `User "${username}" is not allowed to access the portal.`));
+    authenticate(userid, password) {
+        return this._ModelUserEntry.findById(userid).exec().then(
+            (doc) => {
+                if (!doc) {
+                    this.error(401, `User "${userid}" is not found among registered users.`);
+                }
+                if (password !== doc.password) {
+                    this.error(401, `Wrong password was submitted for "${userid}" user.`);
+                }
+                const { _id: id, fullname, email } = doc;
+                return { id, fullname, email };
+            },
+            error => this.error(500, error)
+        );
     }
 
     addQueryId(input, query) {
@@ -145,7 +156,7 @@ class NewsMongodb {
         const query = { deleteDate: null };
         const idKey = this.addQueryId(id, query);
 
-        return this._ModelEntry.find(query).exec().then(
+        return this._ModelNewsEntry.find(query).exec().then(
             (docs) => {
                 if (!docs.length) this.error(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
                 return docs[0];
@@ -170,7 +181,7 @@ class NewsMongodb {
 
 NewsMongodb.CLASS_ID = Symbol('Unique ID of NewsMongodb class');
 
-NewsMongodb.NEWS_ENTRY_SCHEMA = new mongoose.Schema({
+NewsMongodb.SCHEMA_NEWS_ENTRY = new mongoose.Schema({
     sid       : { type: Number, required: true },  // sid stands for sequential identifier
     title     : { type: String, default: 'no title given' },
     summary   : { type: String, default: 'no summary given' },
@@ -182,6 +193,13 @@ NewsMongodb.NEWS_ENTRY_SCHEMA = new mongoose.Schema({
     editedBy  : String,
     deleteDate: Date,
     deletedBy : String
+});
+
+NewsMongodb.SCHEMA_USER_ENTRY = new mongoose.Schema({
+    _id     : String,
+    password: String,
+    fullname: String,
+    email   : String
 });
 
 module.exports = NewsMongodb;
