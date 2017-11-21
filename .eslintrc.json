@@ -24,7 +24,12 @@
         "no-cond-assign": ["error", "except-parens"],
         "no-multi-spaces": ["error", {"ignoreEOLComments": true, "exceptions": {"VariableDeclarator": true}}],
         "no-unused-expressions": ["error", {"allowShortCircuit": true, "allowTernary": true}],
-        "object-curly-newline": ["error", {"ObjectExpression": {"minProperties": 9}, "ObjectPattern": {"minProperties": 9}}],
+        "object-curly-newline": [
+            "error", {
+                "ObjectExpression": {"minProperties": 9, "consistent": true},
+                "ObjectPattern": {"minProperties": 9, "consistent": true}
+            }
+        ],
         // Preventing "eslint-plugin-import" from reporting unwanted errors when running on Windows OS.
         "import/no-unresolved": ["error", {"caseSensitive": false}]
     }
