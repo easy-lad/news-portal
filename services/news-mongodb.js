@@ -86,6 +86,12 @@ class NewsMongodb {
         });
     }
 
+    authenticate(username, password) {
+        console.log(`STUB NewsMongodb#authenticate(${username}, ${password}) ...`);
+        if (username === 'admin') return Promise.resolve({ name: username });
+        return Promise.reject(this.response(401, `User "${username}" is not allowed to access the portal.`));
+    }
+
     addQueryId(input, query) {
         let key = null;
         const id = typeof input === 'object' ? input.id : input;

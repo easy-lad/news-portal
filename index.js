@@ -10,6 +10,7 @@ const mongoSettings2 = { port: 8008, dbName: 'newsPortal2' };
 
 
 server.use('/api/news', express.json());  // Using a built-in middleware to parse JSON body.
+server.use('/api/news', express.urlencoded());
 
 server.use(['/api/news/mem', '/api/news/memory'], storeRouter());    // Two distinct memory-mapped news stores
 server.use(['/api/news/mem2', '/api/news/memory2'], storeRouter());  // each mounted at two alternative routes.
