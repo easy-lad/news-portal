@@ -47,10 +47,11 @@ class NewsMongodb {
         );
     }
 
-    add(fields) {
+    add(fields, user) {
         return this._ModelNewsEntry.count({}).exec().then(
             (count) => {
-                const doc = this.updateWith(fields, 'addedBy');
+                const doc = this.updateWith(fields);
+                doc.addedBy = user.id;
                 doc.sid = count + 1;  // sid starts at 1
 
                 return this._ModelNewsEntry.create(doc).then(
@@ -62,10 +63,11 @@ class NewsMongodb {
         );
     }
 
-    update(id, fields) {
+    update(id, fields, user) {
         return this.getDoc(id).then((doc) => {
-            fields = this.updateWith(fields, 'editedBy');
+            fields = this.updateWith(fields);
             Object.keys(fields).forEach(k => fields[k] !== undefined && (doc[k] = fields[k]));
+            doc.editedBy = user.id;
             doc.editDate = Date.now();
 
             return doc.save().then(
@@ -75,9 +77,9 @@ class NewsMongodb {
         });
     }
 
-    remove(id) {
+    remove(id, user) {
         return this.getDoc(id).then((doc) => {
-            doc.deletedBy = 'anonymous';
+            doc.deletedBy = user.id;
             doc.deleteDate = Date.now();
 
             return doc.save().then(
@@ -165,9 +167,9 @@ class NewsMongodb {
         );
     }
 
-    updateWith(fields, keyWho) {
-        const { title, summary, body, tags, who = 'anonymous' } = typeof fields === 'object' ? fields : {};
-        return { title, summary, body, tags, [keyWho]: who };
+    updateWith(fields) {
+        const { title, summary, body, tags } = typeof fields === 'object' ? fields : {};
+        return { title, summary, body, tags };
     }
 
     error(code, error) {

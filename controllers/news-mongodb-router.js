@@ -12,54 +12,37 @@ function createRouter(settings) {
 
 
     passport.use(new Strategy((username, password, done) => {
-        const promise = db.authenticate(username, password);
-        promise.then(user => done(null, user), error => done(error));
+        db.authenticate(username, password).then(usr => done(null, usr), err => done(err));
     }));
 
-    passport.serializeUser((user, done) => {
-        console.log(`STUB serializeUser(${user.name}) ...`);
-        done(null, 'DUMMY_USER_ID');
-    });
-
-    passport.deserializeUser((id, done) => {
-        console.log(`STUB deserializeUser(${id}) ...`);
-        done(null, { name: 'DUMMY_USER' });
-    });
+    passport.serializeUser((user, done) => done(null, user.id));
+    passport.deserializeUser((idUser, done) => done(null, { id: idUser }));
 
     router.use('/', session({ secret: 'magic' }));
     router.use('/', passport.initialize());
     router.use('/', passport.session());
 
-    router.use('/login', (req, res, next) => {
-        function handler(error, user) {
-            if (error || !user) {
-                next(error || db.response(401, 'User could not be identified.'));
-            }
-            else {
-                req.user = user;
+    router.post('/login', (req, res, next) => {
+        passport.authenticate('local', (error, user) => {
+            if (!error && user) {
                 req.login(user, (err) => {
                     if (!err) {
-                        res.status(200).send(`User ${user.name} is logged in.`);
+                        res.status(200).json(db.response(200, `User "${user.id}" is logged in.`));
                     }
                     else next(err);
                 });
             }
-        }
-        console.log('passport.authenticate() ...');
-        passport.authenticate('local', handler)(req, res, next);
+            else next(error || db.response(401, 'No expected credentials are received.'));
+        })(req, res, next);
     });
 
     router.use('/', (req, res, next) => {
-        if (req.user) {
-            console.log(`Authenticated user: ${req.user.name}`);
-            next();
-        }
-        else next(db.response(401, 'Authentication is required.'));
+        next(req.user ? 'route' : db.response(401, 'Authentication was not fulfilled so far.'));
     });
 
     // Create
     router.post('/', (req, res, next) => {
-        res.locals.promise = db.add(req.body);
+        res.locals.promise = db.add(req.body, req.user);
         next();
     });
 
@@ -78,13 +61,13 @@ function createRouter(settings) {
 
     // Update
     router.put('/:id', (req, res, next) => {
-        res.locals.promise = db.update(req.params.id, req.body);
+        res.locals.promise = db.update(req.params.id, req.body, req.user);
         next();
     });
 
     // Delete
     router.delete('/:id', (req, res, next) => {
-        res.locals.promise = db.remove(req.params.id);
+        res.locals.promise = db.remove(req.params.id, req.user);
         next();
     });
 
