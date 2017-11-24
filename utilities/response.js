@@ -24,11 +24,17 @@ function response(...p) {
     return output(p[0], p[1]);
 }
 
-response.error = (err, res) => {
+response.error = (err, req, res, next) => {
     if (typeof err !== 'object' || !(ID in err)) {
         response(res, 500, err instanceof Error ? `${err.name}: ${err.message}` : err);
     }
     else response(res, err);
+    /*
+     *  Since the function is designed to serve as the error-handling middleware, it must have 4
+     *  declared parameters. Two of them (req, next), however, are not needed here. So, the only
+     *  purpose of the following is to prevent a linter from complaining about unused variables.
+     */
+    return { req, next };
 };
 
 module.exports = response;
