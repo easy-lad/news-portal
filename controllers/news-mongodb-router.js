@@ -1,52 +1,44 @@
-const express       = require('express');
-const authenticator = require('./news-authenticator.js');
-const NewsMongodb   = require('../services/news-mongodb.js');
+const express  = require('express');
+const response = require('../utilities/response.js');
 
 
-function createRouter(settings) {
+function createRouter(NewsStore, authenticator, settings) {
     const router = express.Router();
-    const store = new NewsMongodb(settings);
+    const store  = new NewsStore(settings);
+    const auth   = authenticator(store);
+    const reply  = (promise, res, next) => promise.then(v => response(res, v), r => next(r));
 
-    router.use('/', authenticator.local(store));
+    router.post('/login', auth.login);
+    router.get('/logout', auth.logout);
 
     // Create
-    router.post('/', (req, res, next) => {
-        res.locals.promise = store.add(req.body, req.user);
-        next();
+    router.post('/', auth.pass, (req, res, next) => {
+        reply(store.add(req.body, req.user), res, next);
     });
 
     // Read
-    router.get('/', (req, res, next) => {
-        res.locals.promise = store.get(req.query);
-        next();
+    router.get('/', auth.pass, (req, res, next) => {
+        reply(store.get(req.query), res, next);
     });
 
     // Read
-    router.get('/:id', (req, res, next) => {
+    router.get('/:id', auth.pass, (req, res, next) => {
         req.query.id = req.params.id;
-        res.locals.promise = store.get(req.query);
-        next();
+        reply(store.get(req.query), res, next);
     });
 
     // Update
-    router.put('/:id', (req, res, next) => {
-        res.locals.promise = store.update(req.params.id, req.body, req.user);
-        next();
+    router.put('/:id', auth.pass, (req, res, next) => {
+        reply(store.update(req.params.id, req.body, req.user), res, next);
     });
 
     // Delete
-    router.delete('/:id', (req, res, next) => {
-        res.locals.promise = store.remove(req.params.id, req.user);
-        next();
-    });
-
-    router.use('/', (req, res, next) => {
-        const p = res.locals.promise;
-        !p ? next() : p.then(v => res.status(v.httpCode).json(v), r => next(r));
+    router.delete('/:id', auth.pass, (req, res, next) => {
+        reply(store.remove(req.params.id, req.user), res, next);
     });
 
     router.use('/', (err, req, res, next) => {
-        NewsMongodb.isOwn(err) ? res.status(err.httpCode).json(err) : next(err);
+        NewsStore.isOwn(err) ? response(res, err) : next(err);
     });
 
     return router;

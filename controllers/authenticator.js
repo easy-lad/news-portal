@@ -5,22 +5,26 @@ const StrategyLocal = require('passport-local').Strategy;
 const response      = require('../utilities/response.js');
 
 
-function routerLocal(newsStore) {
-    const router = express.Router();
+function local(newsStore) {
+    const expressSession = session({ secret: 'magic', saveUninitialized: false, resave: false });
     const passport = new Passport();
 
     passport.use(new StrategyLocal((username, password, done) => {
         newsStore.authenticate(username, password).then(usr => done(null, usr), err => done(err));
     }));
-
     passport.serializeUser((user, done) => done(null, user.id));
     passport.deserializeUser((idUser, done) => done(null, { id: idUser }));
 
-    router.use('/', session({ secret: 'magic', saveUninitialized: false, resave: false }));
-    router.use('/', passport.initialize());
-    router.use('/', passport.session());
+    const routerSession = express.Router();
+    routerSession.use(expressSession, passport.initialize(), passport.session());
 
-    router.post('/login', (req, res, next) => {
+    const routerPass = express.Router();
+    routerPass.use(routerSession, (req, res, next) => {
+        next(req.user ? 'route' : response(403, `Authentication is required to ${req.method} on "${req.originalUrl}".`));
+    });
+
+    const routerLogin = express.Router();
+    routerLogin.use(routerSession, (req, res, next) => {
         if (!req.user) {
             passport.authenticate('local', (error, user) => {
                 if (!error && user) {
@@ -32,11 +36,14 @@ function routerLocal(newsStore) {
         else response(res, 200, `User "${req.user.id}" is already logged in.`);
     });
 
-    router.use('/', (req, res, next) => {
-        next(req.user ? 'route' : response(401, 'Authentication was not fulfilled so far.'));
+    const routerLogout = express.Router();
+    routerLogout.use(routerPass, (req, res) => {
+        const user = req.user.id;
+        req.logout();
+        response(res, 200, `User "${user}" is logged out.`);
     });
 
-    return router;
+    return { pass: routerPass, login: routerLogin, logout: routerLogout };
 }
 
-exports.local = routerLocal;
+exports.local = local;
