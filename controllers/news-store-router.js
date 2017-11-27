@@ -1,12 +1,12 @@
 const express      = require('express');
 const { Passport } = require('passport');
 const Strategy     = require('passport-http').BasicStrategy;
-const NewsStore    = require('../services/news-store.js');
+const NewsMemory   = require('../services/news-memory.js');
 
 
 function createRouter() {
     const router   = express.Router();
-    const store    = new NewsStore({ title: 'test entry', summary: 'automatically created for test purposes', who: 'server' });
+    const store    = new NewsMemory({ title: 'test entry', summary: 'automatically created for test purposes', who: 'server' });
     const passport = new Passport();
 
     passport.use(new Strategy((username, password, done) => {

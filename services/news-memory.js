@@ -1,4 +1,4 @@
-class NewsStore {
+class NewsMemory {
     constructor(...args) {
         this._store = [];
         args.forEach(a => this.add(a, { name: a.who }));
@@ -43,7 +43,7 @@ class NewsStore {
     }
 
     authenticate(username, password) {
-        console.log(`STUB NewsStore#authenticate(${username},${password}) : store.length=${this._store.length}`);
+        console.log(`STUB NewsMemory#authenticate(${username},${password}) : store.length=${this._store.length}`);
         if (username === 'admin') return Promise.resolve({ name: username });
         const error = { from: this, code: 401, text: `User "${username}" is not allowed to access the portal.` };
         return Promise.reject(error);
@@ -62,4 +62,4 @@ class NewsStore {
     }
 }
 
-module.exports = NewsStore;
+module.exports = NewsMemory;
