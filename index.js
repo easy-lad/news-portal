@@ -22,7 +22,7 @@ server.use(['/api/news/mem2', '/api/news/memory2'], storeRouter());
 
 // Two distinct MongoDB-based news stores each mounted at its own route.
 server.use('/api/news/mongo', mongoRouter(NewsMongodb, authenticator.local, mongoSettings));
-server.use('/api/news/mongo2', mongoRouter(NewsMongodb, authenticator.local, mongoSettings2));
+server.use('/api/news/mongo2', mongoRouter(NewsMongodb, authenticator.basic, mongoSettings2));
 
 server.use((req, res, next) => {
     next(response(404, `Either resource "${req.path}" does not exist or method "${req.method}" is not applicable to it.`));
