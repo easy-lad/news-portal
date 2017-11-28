@@ -1,7 +1,7 @@
 const express       = require('express');
 const NewsMongodb   = require('./services/news-mongodb.js');
 const storeRouter   = require('./controllers/news-store-router.js');
-const mongoRouter   = require('./controllers/news-mongodb-router.js');
+const newsRouter    = require('./controllers/news-router.js');
 const authenticator = require('./controllers/authenticator.js');
 const response      = require('./utilities/response.js');
 
@@ -21,8 +21,8 @@ server.use(['/api/news/mem', '/api/news/memory'], storeRouter());
 server.use(['/api/news/mem2', '/api/news/memory2'], storeRouter());
 
 // Two distinct MongoDB-based news stores each mounted at its own route.
-server.use('/api/news/mongo', mongoRouter(NewsMongodb, authenticator.local, mongoSettings));
-server.use('/api/news/mongo2', mongoRouter(NewsMongodb, authenticator.basic, mongoSettings2));
+server.use('/api/news/mongo', newsRouter(NewsMongodb, authenticator.local, mongoSettings));
+server.use('/api/news/mongo2', newsRouter(NewsMongodb, authenticator.basic, mongoSettings2));
 
 server.use((req, res, next) => {
     next(response(404, `Either resource "${req.path}" does not exist or method "${req.method}" is not applicable to it.`));
