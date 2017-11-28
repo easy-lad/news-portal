@@ -37,10 +37,6 @@ function createRouter(NewsStore, authenticator, settings) {
         reply(store.remove(req.params.id, req.user), res, next);
     });
 
-    router.use('/', (err, req, res, next) => {
-        NewsStore.isOwn(err) ? response(res, err) : next(err);
-    });
-
     return router;
 }
 

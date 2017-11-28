@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const mongoose  = require('mongoose');
+const NewsStore = require('./news-store.js');
 
 /*
  *  Forcing Mongoose to use the native promise API; otherwise, it would use its default promise
@@ -7,8 +8,10 @@ const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 
 
-class NewsMongodb {
+class NewsMongodb extends NewsStore {
     constructor(settings) {
+        super();
+
         const { host = '127.0.0.1', port = 8080, dbName = 'test' } = typeof settings === 'object' ? settings : {};
         const connectString = `mongodb://${host}:${port}/${dbName}`;
         const connect = mongoose.createConnection(connectString, { useMongoClient: true });
@@ -16,10 +19,6 @@ class NewsMongodb {
         this._ModelNewsEntry = connect.model('NewsEntry', NewsMongodb.SCHEMA_NEWS_ENTRY);
         this._ModelUserEntry = connect.model('UserEntry', NewsMongodb.SCHEMA_USER_ENTRY);
         connect.then(() => console.log(`Connected to ${connectString}`), e => console.log(String(e)));
-    }
-
-    static isOwn(x) {
-        return typeof x === 'object' && this.CLASS_ID in x;
     }
 
     get(urlQuery) {
@@ -38,29 +37,23 @@ class NewsMongodb {
         const offset = Number(urlQuery.pageOffset) || 0;
         const mQuery = this._ModelNewsEntry.find(query, projection).skip(offset).limit(size).sort('-addDate');
 
-        return mQuery.lean().exec().then(
-            docs => this._ModelNewsEntry.count(query).exec().then(
-                count => this.response(200, { page: docs, totalEntries: count }),
-                err => this.error(500, err)
-            ),
-            err => this.error(500, err)
-        );
+        return mQuery.lean().exec().then((docs) => {
+            const handler = count => this.response(200, { page: docs, totalEntries: count });
+            return this._ModelNewsEntry.count(query).exec().then(handler);
+        });
     }
 
     add(fields, user) {
-        return this._ModelNewsEntry.count({}).exec().then(
-            (count) => {
-                const doc = this.updateWith(fields);
-                doc.addedBy = user.id;
-                doc.sid = count + 1;  // sid starts at 1
+        return this._ModelNewsEntry.count({}).exec().then((count) => {
+            const doc = this.updateWith(fields);
+            doc.addedBy = user.id;
+            doc.sid = count + 1;  // sid starts at 1
 
-                return this._ModelNewsEntry.create(doc).then(
-                    cDoc => this.response(201, `New entry with SID=${cDoc.sid} & _ID=${cDoc._id} has been CREATED.`),
-                    err => this.error(500, err)
-                );
-            },
-            err => this.error(500, err)
-        );
+            return this._ModelNewsEntry.create(doc).then((cDoc) => {
+                const message = `New entry with SID=${cDoc.sid} & _ID=${cDoc._id} has been CREATED.`;
+                return this.response(201, message);
+            });
+        });
     }
 
     update(id, fields, user) {
@@ -70,10 +63,10 @@ class NewsMongodb {
             doc.editedBy = user.id;
             doc.editDate = Date.now();
 
-            return doc.save().then(
-                sDoc => this.response(200, `Entry with SID=${sDoc.sid} & _ID=${sDoc._id} has been UPDATED.`),
-                err => this.error(500, err)
-            );
+            return doc.save().then((sDoc) => {
+                const message = `Entry with SID=${sDoc.sid} & _ID=${sDoc._id} has been UPDATED.`;
+                return this.response(200, message);
+            });
         });
     }
 
@@ -82,27 +75,24 @@ class NewsMongodb {
             doc.deletedBy = user.id;
             doc.deleteDate = Date.now();
 
-            return doc.save().then(
-                sDoc => this.response(200, `Entry with SID=${sDoc.sid} & _ID=${sDoc._id} has been DELETED.`),
-                err => this.error(500, err)
-            );
+            return doc.save().then((sDoc) => {
+                const message = `Entry with SID=${sDoc.sid} & _ID=${sDoc._id} has been DELETED.`;
+                return this.response(200, message);
+            });
         });
     }
 
     authenticate(userid, password) {
-        return this._ModelUserEntry.findById(userid).exec().then(
-            (doc) => {
-                if (!doc) {
-                    this.error(401, `User "${userid}" is not found among registered users.`);
-                }
-                if (password !== doc.password) {
-                    this.error(401, `Wrong password was submitted for "${userid}" user.`);
-                }
-                const { _id: id, fullname, email } = doc;
-                return { id, fullname, email };
-            },
-            error => this.error(500, error)
-        );
+        return this._ModelUserEntry.findById(userid).exec().then((doc) => {
+            if (!doc) {
+                this.error(401, `User "${userid}" is not found among registered users.`);
+            }
+            if (password !== doc.password) {
+                this.error(401, `Wrong password was submitted for "${userid}" user.`);
+            }
+            const { _id: id, fullname, email } = doc;
+            return { id, fullname, email };
+        });
     }
 
     addQueryId(input, query) {
@@ -158,30 +148,17 @@ class NewsMongodb {
         const query = { deleteDate: null };
         const idKey = this.addQueryId(id, query);
 
-        return this._ModelNewsEntry.find(query).exec().then(
-            (docs) => {
-                if (!docs.length) this.error(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
-                return docs[0];
-            },
-            err => this.error(500, err)
-        );
+        return this._ModelNewsEntry.find(query).exec().then((docs) => {
+            if (!docs.length) this.error(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
+            return docs[0];
+        });
     }
 
     updateWith(fields) {
         const { title, summary, body, tags } = typeof fields === 'object' ? fields : {};
         return { title, summary, body, tags };
     }
-
-    error(code, error) {
-        throw this.response(code, error instanceof Error ? `${error.name}: ${error.message}` : error);
-    }
-
-    response(code, data) {
-        return { httpCode: code, output: data, [NewsMongodb.CLASS_ID]: this };
-    }
 }
-
-NewsMongodb.CLASS_ID = Symbol('Unique ID of NewsMongodb class');
 
 NewsMongodb.SCHEMA_NEWS_ENTRY = new mongoose.Schema({
     sid       : { type: Number, required: true },  // sid stands for sequential identifier
