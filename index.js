@@ -8,8 +8,11 @@ const response      = require('./utilities/response.js');
 const port   = 8888;
 const server = express();
 
-const mongoSettings  = { port: 8008, dbName: 'newsPortal' };
-const mongoSettings2 = { port: 8008, dbName: 'newsPortal2' };
+const mongoSettings  = {
+    news: { port: 8008, dbName: 'newsPortal' },
+    auth: { session: { store: 'connect-mongo', port: 8008, dbName: 'loginSessions', collName: 'newsPortal' } }
+};
+const mongoSettings2 = { news: { port: 8008, dbName: 'newsPortal2' } };
 
 
 // Using built-in middlewares to parse requests body contents in JSON and URL-encoded formats.

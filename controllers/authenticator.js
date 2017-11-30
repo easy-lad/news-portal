@@ -1,15 +1,44 @@
-const express       = require('express');
-const session       = require('express-session');
-const { Passport }  = require('passport');
-const StrategyLocal = require('passport-local').Strategy;
-const StrategyBasic = require('passport-http').BasicStrategy;
-const response      = require('../utilities/response.js');
+const express        = require('express');
+const expressSession = require('express-session');
+const StoreMongo     = require('connect-mongo')(expressSession);
+const { Passport }   = require('passport');
+const StrategyLocal  = require('passport-local').Strategy;
+const StrategyBasic  = require('passport-http').BasicStrategy;
+const response       = require('../utilities/response.js');
 
 
-function local(resource) {
-    const expressSession = session({ secret: 'magic', saveUninitialized: false, resave: false });
+function localSession(settings) {
+    const options = {
+        secret           : 'magic', // Session ID cookie will be signed with this secret.
+        saveUninitialized: false,   // Do not save newly created sessions which are left intact.
+        resave           : false,   // Do not save back restored sessions which are left intact.
+        rolling          : true,    // Send the cookie with each response to shift its expiration.
+        cookie           : {
+            httpOnly: true,         // Prevent client-side JavaScript from accessing the cookie.
+            maxAge  : 300000        // Set the cookie's "Expires" to (current time + maxAge(ms)).
+        }
+    };
+
+    if (settings && typeof settings === 'object') {
+        const { session } = settings;
+
+        if (session && typeof session === 'object') {
+            if (session.store === 'connect-mongo') {
+                const { host = '127.0.0.1', port = 8888 } = session;
+                const { dbName = 'test', collName: collection = 'sessions' } = session;
+                const url = `mongodb://${host}:${port}/${dbName}`;
+                options.store = new StoreMongo({ url, collection });
+            }
+            else if ('store' in session && session.store !== 'MemoryStore') {
+                throw new Error(`Session store "${session.store}" is not supported.`);
+            }
+        }
+    }
+    return expressSession(options);
+}
+
+function local(resource, settings) {
     const passport = new Passport();
-
     passport.use(new StrategyLocal((username, password, done) => {
         resource.authenticate(username, password).then(user => done(null, user), err => done(err));
     }));
@@ -17,7 +46,7 @@ function local(resource) {
     passport.deserializeUser((idUser, done) => done(null, { id: idUser }));
 
     const routerSession = express.Router();
-    routerSession.use(expressSession, passport.initialize(), passport.session());
+    routerSession.use(localSession(settings), passport.initialize(), passport.session());
 
     const routerPass = express.Router();
     routerPass.use(routerSession, (req, res, next) => {
