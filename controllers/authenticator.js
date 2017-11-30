@@ -12,7 +12,7 @@ function localSession(settings) {
         secret           : 'magic', // Session ID cookie will be signed with this secret.
         saveUninitialized: false,   // Do not save newly created sessions which are left intact.
         resave           : false,   // Do not save back restored sessions which are left intact.
-        rolling          : true,    // Send the cookie with each response to shift its expiration.
+        rolling          : true,    // Send the cookie with each response to defer its expiration.
         cookie           : {
             httpOnly: true,         // Prevent client-side JavaScript from accessing the cookie.
             maxAge  : 300000        // Set the cookie's "Expires" to (current time + maxAge(ms)).
@@ -67,10 +67,15 @@ function local(resource, settings) {
     });
 
     const routerLogout = express.Router();
-    routerLogout.use(routerPass, (req, res) => {
+    routerLogout.use(routerPass, (req, res, next) => {
         const user = req.user.id;
         req.logout();
-        response(res, 200, `User "${user}" is logged out.`);
+        /*
+         *  With the "connect-mongo" used as the session store, the above call to logout() does not
+         *  yield the removal of the session document but merely sets its "session.passport" field
+         *  to {}. Below, we forcibly delete the entire document through destroy().
+         */
+        req.session.destroy(err => (err ? next(err) : response(res, 200, `User "${user}" is logged out.`)));
     });
 
     return { pass: routerPass, login: routerLogin, logout: routerLogout };
