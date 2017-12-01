@@ -58,6 +58,7 @@ function local(resource, settings) {
         if (!req.user) {
             passport.authenticate('local', (error, user) => {
                 if (!error && user) {
+                    req.session.cookie.path = req.baseUrl;
                     req.login(user, err => (err ? next(err) : response(res, 200, `User "${user.id}" is logged in.`)));
                 }
                 else next(error || response(401, 'No expected credentials are received.'));
