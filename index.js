@@ -1,6 +1,6 @@
 const express       = require('express');
+const NewsMemory    = require('./services/news-memory.js');
 const NewsMongodb   = require('./services/news-mongodb.js');
-const storeRouter   = require('./controllers/news-store-router.js');
 const newsRouter    = require('./controllers/news-router.js');
 const authenticator = require('./controllers/authenticator.js');
 const response      = require('./utilities/response.js');
@@ -8,11 +8,19 @@ const response      = require('./utilities/response.js');
 const port   = 8888;
 const server = express();
 
-const mongoSettings  = {
-    news: { port: 8008, dbName: 'newsPortal' },
-    auth: { session: { store: 'connect-mongo', port: 8008, dbName: 'loginSessions', collName: 'newsPortal' } }
+const settingsMemory = {
+    news: { users: 'users.yaml', entries: [{ title: 'test: Memory', summary: 'created for test purposes', who: 'server' }] },
+    auth: { session: { store: 'connect-mongo', port: 8008, dbName: 'loginSessions', collName: 'newsMemory' } }
 };
-const mongoSettings2 = { news: { port: 8008, dbName: 'newsPortal2' } };
+const settingsMemory2 = {
+    news: { users: 'users.json', entries: [{ title: 'test: Memory2', summary: 'created for test purposes', who: 'server' }] }
+};
+
+const settingsMongo = {
+    news: { port: 8008, dbName: 'newsPortal' },
+    auth: { session: { store: 'connect-mongo', port: 8008, dbName: 'loginSessions', collName: 'newsMongo' } }
+};
+const settingsMongo2 = { news: { port: 8008, dbName: 'newsPortal2' } };
 
 
 // Using built-in middlewares to parse requests body contents in JSON and URL-encoded formats.
@@ -20,12 +28,12 @@ server.use('/api/news', express.json());
 server.use('/api/news', express.urlencoded({ extended: false }));
 
 // Two distinct memory-mapped news stores each mounted at two alternative routes.
-server.use(['/api/news/mem', '/api/news/memory'], storeRouter());
-server.use(['/api/news/mem2', '/api/news/memory2'], storeRouter());
+server.use(['/api/news/mem', '/api/news/memory'], newsRouter(NewsMemory, authenticator.local, settingsMemory));
+server.use(['/api/news/mem2', '/api/news/memory2'], newsRouter(NewsMemory, authenticator.basic, settingsMemory2));
 
 // Two distinct MongoDB-based news stores each mounted at its own route.
-server.use('/api/news/mongo', newsRouter(NewsMongodb, authenticator.local, mongoSettings));
-server.use('/api/news/mongo2', newsRouter(NewsMongodb, authenticator.basic, mongoSettings2));
+server.use('/api/news/mongo', newsRouter(NewsMongodb, authenticator.local, settingsMongo));
+server.use('/api/news/mongo2', newsRouter(NewsMongodb, authenticator.basic, settingsMongo2));
 
 server.use((req, res, next) => {
     next(response(404, `Either resource "${req.path}" does not exist or method "${req.method}" is not applicable to it.`));

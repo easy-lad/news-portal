@@ -1,16 +1,35 @@
-class NewsMemory {
-    constructor(...args) {
+const NewsStore = require('./news-store.js');
+
+
+class NewsMemory extends NewsStore {
+    constructor(settings) {
+        super();
         this._store = [];
-        args.forEach(a => this.add(a, { name: a.who }));
+
+        if (settings && typeof settings === 'object') {
+            const { entries } = settings;
+
+            if (Array.isArray(entries)) {
+                entries.forEach(entry => this.add(entry, { id: entry.who }));
+            }
+        }
     }
 
-    get(id, shortOutput) {
-        const output = id !== 'all' ? [this.getEntry(id)] : this._store.filter(e => !('deleteDate' in e));
+    get(query) {
+        let output;
 
-        return !shortOutput ? output : output.map((e) => {
-            const { _id, title, summary } = e;
-            return { _id, title, summary };
-        });
+        if (!('id' in query)) {
+            output = this._store.filter(entry => !('deleteDate' in entry));
+        }
+        else output = [this.getEntry(query.id)];
+
+        if ('short' in query) {
+            output = output.map((entry) => {
+                const { sid, title, summary } = entry;
+                return { sid, title, summary };
+            });
+        }
+        return this.$resolved(200, { page: output, totalEntries: output.length });
     }
 
     add(fields, user) {
@@ -18,46 +37,40 @@ class NewsMemory {
         const store = this._store;
         const toAdd = { title: null, summary: null, body: null, tags: [] };  // key:default
 
-        entry._id = store.length;
+        entry.sid = store.length + 1;  // sid (stands for sequential identifier) starts at 1
+        entry.addedBy = user.id;
         entry.addDate = (new Date()).toISOString();
-        entry.addedBy = user.name;
-        Object.keys(toAdd).forEach(k => entry[k] = k in fields ? fields[k] : toAdd[k] || `No "${k}" given.`);
-
-        return `New entry with ID="${store.push(entry) - 1}" has been CREATED.`;
+        Object.keys(toAdd).forEach(k => entry[k] = k in fields ? fields[k] : toAdd[k] || `no ${k} given`);
+        store.push(entry);
+        return this.$resolved(201, `New entry with SID=${entry.sid} has been CREATED.`);
     }
 
-    update(id, fields, user) {
-        const entry = this.getEntry(id);
-        const toUpdate = ['title', 'summary', 'body', 'tags'];
-
-        toUpdate.forEach(k => k in fields && (entry[k] = fields[k]));
+    update(sid, fields, user) {
+        const entry = this.$updateEntry(this.getEntry(sid), fields);
+        entry.editedBy = user.id;
         entry.editDate = (new Date()).toISOString();
-        entry.editedBy = user.name;
-
-        return `Entry with ID="${id}" has been UPDATED.`;
+        return this.$resolved(200, `Entry with SID=${sid} has been UPDATED.`);
     }
 
-    remove(id) {
-        this.getEntry(id).deleteDate = (new Date()).toISOString();
-        return `Entry with ID="${id}" has been DELETED.`;
+    remove(sid, user) {
+        const entry = this.getEntry(sid);
+        entry.deletedBy = user.id;
+        entry.deleteDate = (new Date()).toISOString();
+        return this.$resolved(200, `Entry with SID=${sid} has been DELETED.`);
     }
 
-    authenticate(username, password) {
-        console.log(`STUB NewsMemory#authenticate(${username},${password}) : store.length=${this._store.length}`);
-        if (username === 'admin') return Promise.resolve({ name: username });
-        const error = { from: this, code: 401, text: `User "${username}" is not allowed to access the portal.` };
-        return Promise.reject(error);
+    authenticate(userid, password) {
+        console.log(`STUB: NewsMemory#authenticate(${userid},${password}) ...`);
+        return Promise.resolve({ id: userid });
     }
 
-    getEntry(id) {
-        const index = Number(id);
+    getEntry(sid) {
+        const index = Number(sid) - 1;  // as the sid starts at 1 whereas arrays are zero-based
         const store = this._store;
 
         if (!(index in store) || 'deleteDate' in store[index]) {
-            const error = { from: this, code: 404, text: `No entry with ID="${id}" is found.` };
-            throw error;
+            this.error(404, `No entry with SID=${sid} is found.`);
         }
-
         return store[index];
     }
 }
