@@ -69,7 +69,7 @@ class NewsMemory extends NewsStore {
         const store = this._store;
 
         if (!(index in store) || 'deleteDate' in store[index]) {
-            this.error(404, `No entry with SID=${sid} is found.`);
+            this.$throw(404, `No entry with SID=${sid} is found.`);
         }
         return store[index];
     }

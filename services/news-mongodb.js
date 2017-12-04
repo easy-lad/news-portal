@@ -84,10 +84,10 @@ class NewsMongodb extends NewsStore {
     authenticate(userid, password) {
         return this._ModelUserEntry.findById(userid).exec().then((doc) => {
             if (!doc) {
-                this.error(401, `User "${userid}" is not found among registered users.`);
+                this.$throw(401, `User "${userid}" is not found among registered users.`);
             }
             if (password !== doc.password) {
-                this.error(401, `Wrong password was submitted for "${userid}" user.`);
+                this.$throw(401, `Wrong password was submitted for "${userid}" user.`);
             }
             const { _id: id, fullname, email } = doc;
             return { id, fullname, email };
@@ -138,7 +138,7 @@ class NewsMongodb extends NewsStore {
             string = (new Date(string)).toISOString();
         }
         catch (error) {
-            this.error(400, `Date string "${string}" could not be parsed due to ${error.name}:${error.message}.`);
+            this.$throw(400, `Date string "${string}" could not be parsed due to ${error.name}:${error.message}.`);
         }
         return string;
     }
@@ -148,7 +148,7 @@ class NewsMongodb extends NewsStore {
         const idKey = this.addQueryId(id, query);
 
         return this._ModelNewsEntry.find(query).exec().then((docs) => {
-            if (!docs.length) this.error(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
+            if (!docs.length) this.$throw(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
             return docs[0];
         });
     }

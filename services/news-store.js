@@ -2,9 +2,6 @@ const response = require('../utilities/response.js');
 
 
 class NewsStore {
-    error(code, message) {
-        throw response(code, message);
-    }
     /*
      *  Here, we adopt a naming convention where a methods intended for the use solely within a
      *  subclasses (not by the users of classes) are assigned a names beginning with "$" prefix.
@@ -12,6 +9,10 @@ class NewsStore {
      */
     $resolved(code, data) {
         return Promise.resolve(response(code, data));
+    }
+
+    $throw(code, message) {
+        throw response(code, message);
     }
 
     $updateEntry(entry, input) {
