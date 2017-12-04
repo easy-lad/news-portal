@@ -38,7 +38,7 @@ class NewsMongodb extends NewsStore {
         const mQuery = this._ModelNewsEntry.find(query, projection).skip(offset).limit(size).sort('-addDate');
 
         return mQuery.lean().exec().then((docs) => {
-            const handler = count => this.response(200, { page: docs, totalEntries: count });
+            const handler = count => this.$resolved(200, { page: docs, totalEntries: count });
             return this._ModelNewsEntry.count(query).exec().then(handler);
         });
     }
@@ -51,7 +51,7 @@ class NewsMongodb extends NewsStore {
 
             return this._ModelNewsEntry.create(doc).then((cDoc) => {
                 const message = `New entry with SID=${cDoc.sid} & _ID=${cDoc._id} has been CREATED.`;
-                return this.response(201, message);
+                return this.$resolved(201, message);
             });
         });
     }
@@ -64,7 +64,7 @@ class NewsMongodb extends NewsStore {
 
             return doc.save().then((sDoc) => {
                 const message = `Entry with SID=${sDoc.sid} & _ID=${sDoc._id} has been UPDATED.`;
-                return this.response(200, message);
+                return this.$resolved(200, message);
             });
         });
     }
@@ -76,7 +76,7 @@ class NewsMongodb extends NewsStore {
 
             return doc.save().then((sDoc) => {
                 const message = `Entry with SID=${sDoc.sid} & _ID=${sDoc._id} has been DELETED.`;
-                return this.response(200, message);
+                return this.$resolved(200, message);
             });
         });
     }

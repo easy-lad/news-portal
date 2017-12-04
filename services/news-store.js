@@ -1,13 +1,9 @@
-const utilResponse = require('../utilities/response.js');
+const response = require('../utilities/response.js');
 
 
 class NewsStore {
     error(code, message) {
-        throw utilResponse(code, message);
-    }
-
-    response(code, data) {
-        return utilResponse(code, data);
+        throw response(code, message);
     }
     /*
      *  Here, we adopt a naming convention where a methods intended for the use solely within a
@@ -15,7 +11,7 @@ class NewsStore {
      *  In C++, such a methods would be declared with the "protected" access specifier.
      */
     $resolved(code, data) {
-        return Promise.resolve(utilResponse(code, data));
+        return Promise.resolve(response(code, data));
     }
 
     $updateEntry(entry, input) {
