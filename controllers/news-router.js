@@ -2,11 +2,14 @@ const express  = require('express');
 const response = require('../utilities/response.js');
 
 
+function reply(promise, res, next) {
+    promise.then(value => response(res, value), reason => next(reason));
+}
+
 function createRouter(NewsStore, authenticator, settings) {
     const router = express.Router();
     const store  = new NewsStore(settings.news);
     const auth   = authenticator(store, settings.auth);
-    const reply  = (promise, res, next) => promise.then(v => response(res, v), r => next(r));
 
     router.post('/login', auth.login);
     router.get('/logout', auth.logout);
