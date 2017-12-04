@@ -45,7 +45,7 @@ class NewsMongodb extends NewsStore {
 
     add(fields, user) {
         return this._ModelNewsEntry.count({}).exec().then((count) => {
-            const doc = this.updateWith(fields);
+            const doc = this.$updateEntry({}, fields);
             doc.addedBy = user.id;
             doc.sid = count + 1;  // sid starts at 1
 
@@ -58,8 +58,7 @@ class NewsMongodb extends NewsStore {
 
     update(id, fields, user) {
         return this.getDoc(id).then((doc) => {
-            fields = this.updateWith(fields);
-            Object.keys(fields).forEach(k => fields[k] !== undefined && (doc[k] = fields[k]));
+            this.$updateEntry(doc, fields);
             doc.editedBy = user.id;
             doc.editDate = Date.now();
 
@@ -152,11 +151,6 @@ class NewsMongodb extends NewsStore {
             if (!docs.length) this.error(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
             return docs[0];
         });
-    }
-
-    updateWith(fields) {
-        const { title, summary, body, tags } = typeof fields === 'object' ? fields : {};
-        return { title, summary, body, tags };
     }
 }
 
