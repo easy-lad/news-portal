@@ -29,6 +29,7 @@ class NewsMemory extends NewsStore {
                 return { sid, title, summary };
             });
         }
+        'sortAsc' in query || output.reverse();
         return this.$resolved(200, { page: output, totalEntries: output.length });
     }
 

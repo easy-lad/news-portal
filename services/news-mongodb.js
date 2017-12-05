@@ -24,6 +24,7 @@ class NewsMongodb extends NewsStore {
     get(urlQuery) {
         const query = { deleteDate: null };
         const projection = 'short' in urlQuery ? '_id sid title summary' : '-__v';  // inclusive and exclusive projections
+        const sorting = `${'sortAsc' in urlQuery ? '' : '-'}addDate`;
 
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
         'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
@@ -35,9 +36,9 @@ class NewsMongodb extends NewsStore {
 
         const size = Number(urlQuery.pageSize) || 10;
         const offset = Number(urlQuery.pageOffset) || 0;
-        const mQuery = this._ModelNewsEntry.find(query, projection).skip(offset).limit(size).sort('-addDate');
+        const mQuery = this._ModelNewsEntry.find(query, projection).skip(offset).limit(size);
 
-        return mQuery.lean().exec().then((docs) => {
+        return mQuery.sort(sorting).lean().exec().then((docs) => {
             const handler = count => this.$resolved(200, { page: docs, totalEntries: count });
             return this._ModelNewsEntry.count(query).exec().then(handler);
         });
