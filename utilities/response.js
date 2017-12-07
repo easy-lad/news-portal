@@ -37,4 +37,9 @@ response.error = (err, req, res, next) => {
     return { req, next };
 };
 
+response.error404 = (req, res, next) => {
+    const eitherUrl = `Either resource "${req.originalUrl}" does not exist`;
+    next(response(404, `${eitherUrl} or method "${req.method}" is not applicable to it.`));
+};
+
 module.exports = response;
