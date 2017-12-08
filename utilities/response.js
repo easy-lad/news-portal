@@ -6,17 +6,23 @@ function output(code, data) {
 }
 /*
  *  The function can be invoked in the following ways:
- *  1) response(code, data)       - creates output object and returns it
- *  2) response(res, output)      - finishes the request-response cycle replying with the output
- *  3) response(res, code, data)  - like the above but replies with output composed of the last
- *                                  two parameters
+ *  1) response(code, data)         - creates output object and returns it
+ *  2) response(res, output)        - finishes the request-response cycle replying with the output
+ *  3) response(res, code, data)    - like the above but replies with output composed of the last
+ *                                    two parameters
+ *  4) response(promise, res, next) - sets the both promise handlers which will complete the cycle
  *
- *  code   - HTTP status code to be put into output object.
- *  data   - Primitive/object value (e.g., message or array of objects) to be put into the output.
- *  res    - Express response object.
- *  output - Output object created by this function before (see the case #1).
+ *  code    - HTTP status code to be put into output object.
+ *  data    - Primitive/object value (e.g., message or array of objects) to be put into the output.
+ *  res     - Express response object.
+ *  next    - Express next() function.
+ *  output  - Output object created by this function before (see the case #1).
+ *  promise - Instance of Promise whose settlement we have to wait for.
  */
 function response(...p) {
+    if (p[0] instanceof Promise) {
+        return p[0].then(value => response(p[1], value), reason => p[2](reason));
+    }
     if (typeof p[0] === 'object') {
         const out = typeof p[1] === 'object' ? p[1] : output(p[1], p[2]);
         return p[0].status(out.httpCode).json(out);
