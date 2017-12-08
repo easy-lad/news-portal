@@ -1,5 +1,6 @@
-const mongoose  = require('mongoose');
-const NewsStore = require('./news-store.js');
+const mongoose    = require('mongoose');
+const NewsStore   = require('./news-store.js');
+const TagsMongodb = require('./tags-mongodb.js');
 
 /*
  *  Forcing Mongoose to use the native promise API; otherwise, it would use its default promise
@@ -16,6 +17,7 @@ class NewsMongodb extends NewsStore {
         const connectString = `mongodb://${host}:${port}/${dbName}`;
         const connect = mongoose.createConnection(connectString, { useMongoClient: true });
 
+        this.tags = new TagsMongodb(connect);
         this._ModelNewsEntry = connect.model('NewsEntry', NewsMongodb.SCHEMA_NEWS_ENTRY);
         this._ModelUserEntry = connect.model('UserEntry', NewsMongodb.SCHEMA_USER_ENTRY);
         connect.then(() => console.log(`Connected to ${connectString}`), e => console.log(String(e)));
