@@ -3,10 +3,6 @@ const tagsRouter = require('./tags-router.js');
 const response   = require('../utilities/response.js');
 
 
-function reply(promise, res, next) {
-    promise.then(value => response(res, value), reason => next(reason));
-}
-
 function createRouter(NewsStore, authenticator, settings) {
     const router = express.Router();
     const store  = new NewsStore(settings.news);
@@ -18,28 +14,28 @@ function createRouter(NewsStore, authenticator, settings) {
 
     // Create
     router.post('/', auth.pass, (req, res, next) => {
-        reply(store.add(req.body, req.user), res, next);
+        response(store.add(req.body, req.user), res, next);
     });
 
     // Read
     router.get('/', auth.pass, (req, res, next) => {
-        reply(store.get(req.query), res, next);
+        response(store.get(req.query), res, next);
     });
 
     // Read
     router.get('/:id', auth.pass, (req, res, next) => {
         req.query.id = req.params.id;
-        reply(store.get(req.query), res, next);
+        response(store.get(req.query), res, next);
     });
 
     // Update
     router.put('/:id', auth.pass, (req, res, next) => {
-        reply(store.update(req.params.id, req.body, req.user), res, next);
+        response(store.update(req.params.id, req.body, req.user), res, next);
     });
 
     // Delete
     router.delete('/:id', auth.pass, (req, res, next) => {
-        reply(store.remove(req.params.id, req.user), res, next);
+        response(store.remove(req.params.id, req.user), res, next);
     });
 
     return router;
