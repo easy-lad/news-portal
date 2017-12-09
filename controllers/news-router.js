@@ -1,5 +1,6 @@
-const express  = require('express');
-const response = require('../utilities/response.js');
+const express    = require('express');
+const tagsRouter = require('./tags-router.js');
+const response   = require('../utilities/response.js');
 
 
 function reply(promise, res, next) {
@@ -13,6 +14,7 @@ function createRouter(NewsStore, authenticator, settings) {
 
     router.post('/login', auth.login);
     router.get('/logout', auth.logout);
+    router.use('/tags', tagsRouter(store.tags, auth.pass), response.error404);
 
     // Create
     router.post('/', auth.pass, (req, res, next) => {
