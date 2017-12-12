@@ -1,9 +1,11 @@
-const NewsStore = require('./news-store.js');
+const NewsStore  = require('./news-store.js');
+const TagsMemory = require('./tags-memory.js');
 
 
 class NewsMemory extends NewsStore {
     constructor(settings) {
         super();
+        this.tags = new TagsMemory();
         this._store = [];
 
         if (settings && typeof settings === 'object') {
