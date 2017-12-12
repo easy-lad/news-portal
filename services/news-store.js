@@ -7,8 +7,8 @@ class NewsStore {
      *  subclasses (not by the users of classes) are assigned a names beginning with "$" prefix.
      *  In C++, such a methods would be declared with the "protected" access specifier.
      */
-    $resolved(code, data) {
-        return Promise.resolve(response(code, data));
+    $promise(code, data) {
+        return response.promise(code, data);
     }
 
     $throw(code, message) {

@@ -32,7 +32,7 @@ class NewsMemory extends NewsStore {
             });
         }
         'sortAsc' in query || output.reverse();
-        return this.$resolved(200, { page: output, totalEntries: output.length });
+        return this.$promise(200, { page: output, totalEntries: output.length });
     }
 
     add(fields, user) {
@@ -45,21 +45,21 @@ class NewsMemory extends NewsStore {
         entry.addDate = (new Date()).toISOString();
         Object.keys(toAdd).forEach(k => entry[k] = k in fields ? fields[k] : toAdd[k] || `no ${k} given`);
         store.push(entry);
-        return this.$resolved(201, `New entry with SID=${entry.sid} has been CREATED.`);
+        return this.$promise(201, `New entry with SID=${entry.sid} has been CREATED.`);
     }
 
     update(sid, fields, user) {
         const entry = this.$updateEntry(this.getEntry(sid), fields);
         entry.editedBy = user.id;
         entry.editDate = (new Date()).toISOString();
-        return this.$resolved(200, `Entry with SID=${sid} has been UPDATED.`);
+        return this.$promise(200, `Entry with SID=${sid} has been UPDATED.`);
     }
 
     remove(sid, user) {
         const entry = this.getEntry(sid);
         entry.deletedBy = user.id;
         entry.deleteDate = (new Date()).toISOString();
-        return this.$resolved(200, `Entry with SID=${sid} has been DELETED.`);
+        return this.$promise(200, `Entry with SID=${sid} has been DELETED.`);
     }
 
     authenticate(userid, password) {
