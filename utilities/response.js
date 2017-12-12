@@ -30,6 +30,11 @@ function response(...p) {
     return output(p[0], p[1]);
 }
 
+response.promise = (code, data) => {
+    const o = output(code, data);
+    return code >= 200 && code < 300 ? Promise.resolve(o) : Promise.reject(o);
+};
+
 response.error = (err, req, res, next) => {
     if (typeof err !== 'object' || !(ID in err)) {
         response(res, 500, err instanceof Error ? `${err.name}: ${err.message}` : err);
