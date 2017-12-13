@@ -14,6 +14,10 @@ class TagsMongodb {
             if (tag && !docs.length) {
                 throw response(404, `Tag "${tag}" is not found.`);
             }
+            docs.forEach((doc) => {
+                doc.tag = doc._id;
+                delete doc._id;
+            });
             return response(200, docs);
         });
     }
