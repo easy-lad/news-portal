@@ -1,11 +1,13 @@
 const NewsStore  = require('./news-store.js');
 const TagsMemory = require('./tags-memory.js');
+const UsersFile  = require('./users-file.js');
 
 
 class NewsMemory extends NewsStore {
     constructor(settings) {
         super();
-        this.tags = new TagsMemory();
+
+        let fileUsers;
         this._store = [];
 
         if (settings && typeof settings === 'object') {
@@ -14,7 +16,10 @@ class NewsMemory extends NewsStore {
             if (Array.isArray(entries)) {
                 entries.forEach(entry => this.add(entry, { id: entry.who }));
             }
+            fileUsers = settings.users;
         }
+        this.tags = new TagsMemory();
+        this.users = new UsersFile(fileUsers);
     }
 
     get(query) {
@@ -60,11 +65,6 @@ class NewsMemory extends NewsStore {
         entry.deletedBy = user.id;
         entry.deleteDate = (new Date()).toISOString();
         return this.$promise(200, `Entry with SID=${sid} has been DELETED.`);
-    }
-
-    authenticate(userid, password) {
-        console.log(`STUB: NewsMemory#authenticate(${userid},${password}) ...`);
-        return Promise.resolve({ id: userid });
     }
 
     getEntry(sid) {
