@@ -1,6 +1,7 @@
-const mongoose    = require('mongoose');
-const NewsStore   = require('./news-store.js');
-const TagsMongodb = require('./tags-mongodb.js');
+const mongoose     = require('mongoose');
+const NewsStore    = require('./news-store.js');
+const TagsMongodb  = require('./tags-mongodb.js');
+const UsersMongodb = require('./users-mongodb.js');
 
 /*
  *  Forcing Mongoose to use the native promise API; otherwise, it would use its default promise
@@ -18,8 +19,8 @@ class NewsMongodb extends NewsStore {
         const connect = mongoose.createConnection(connectString, { useMongoClient: true });
 
         this.tags = new TagsMongodb(connect);
+        this.users = new UsersMongodb(connect);
         this._ModelNewsEntry = connect.model('NewsEntry', NewsMongodb.SCHEMA_NEWS_ENTRY);
-        this._ModelUserEntry = connect.model('UserEntry', NewsMongodb.SCHEMA_USER_ENTRY);
         connect.then(() => console.log(`Connected to ${connectString}`), e => console.log(String(e)));
     }
 
@@ -81,19 +82,6 @@ class NewsMongodb extends NewsStore {
                 const message = `Entry with SID=${sDoc.sid} & _ID=${sDoc._id} has been DELETED.`;
                 return this.$promise(200, message);
             });
-        });
-    }
-
-    authenticate(userid, password) {
-        return this._ModelUserEntry.findById(userid).exec().then((doc) => {
-            if (!doc) {
-                this.$throw(401, `User "${userid}" is not found among registered users.`);
-            }
-            if (password !== doc.password) {
-                this.$throw(401, `Wrong password was submitted for "${userid}" user.`);
-            }
-            const { _id: id, fullname, email } = doc;
-            return { id, fullname, email };
         });
     }
 
@@ -169,13 +157,6 @@ NewsMongodb.SCHEMA_NEWS_ENTRY = new mongoose.Schema({
     editedBy  : String,
     deleteDate: Date,
     deletedBy : String
-});
-
-NewsMongodb.SCHEMA_USER_ENTRY = new mongoose.Schema({
-    _id     : String,
-    password: String,
-    fullname: String,
-    email   : String
 });
 
 module.exports = NewsMongodb;

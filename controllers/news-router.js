@@ -6,7 +6,7 @@ const response   = require('../utilities/response.js');
 function createRouter(NewsStore, authenticator, settings) {
     const router = express.Router();
     const store  = new NewsStore(settings.news);
-    const auth   = authenticator(store, settings.auth);
+    const auth   = authenticator(store.users, settings.auth);
 
     router.post('/login', auth.login);
     router.get('/logout', auth.logout);
