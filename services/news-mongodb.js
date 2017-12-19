@@ -1,7 +1,8 @@
-const mongoose     = require('mongoose');
-const NewsStore    = require('./news-store.js');
-const TagsMongodb  = require('./tags-mongodb.js');
-const UsersMongodb = require('./users-mongodb.js');
+const mongoose        = require('mongoose');
+const NewsStore       = require('./news-store.js');
+const TagsMongodb     = require('./tags-mongodb.js');
+const UsersMongodb    = require('./users-mongodb.js');
+const CommentsMongodb = require('./comments-mongodb.js');
 
 /*
  *  Forcing Mongoose to use the native promise API; otherwise, it would use its default promise
@@ -20,6 +21,7 @@ class NewsMongodb extends NewsStore {
 
         this.tags = new TagsMongodb(connect);
         this.users = new UsersMongodb(connect);
+        this._comments = new CommentsMongodb(connect);
         this._ModelNewsEntry = connect.model('NewsEntry', NewsMongodb.SCHEMA_NEWS_ENTRY);
         connect.then(() => console.log(`Connected to ${connectString}`), e => console.log(String(e)));
     }
@@ -85,6 +87,10 @@ class NewsMongodb extends NewsStore {
         });
     }
 
+    commentsOn(id) {
+        return this._comments.methods(this.getDoc(id));
+    }
+
     addQueryId(input, query) {
         let key = null;
         const id = typeof input === 'object' ? input.id : input;
@@ -139,7 +145,7 @@ class NewsMongodb extends NewsStore {
         const idKey = this.addQueryId(id, query);
 
         return this._ModelNewsEntry.find(query).exec().then((docs) => {
-            if (!docs.length) this.$throw(404, `No entry with ${idKey.toUpperCase()}=${id} is found.`);
+            if (!docs.length) this.$throw(404, `No news entry with ${idKey.toUpperCase()}=${id} is found.`);
             return docs[0];
         });
     }
