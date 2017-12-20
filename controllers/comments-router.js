@@ -22,9 +22,10 @@ function createRouter(commentsOn, auth) {
         response(commentsOn(req.params.idNews).remove(req.user), res, next);
     });
 
-    // Fetch a given comment along with a sub-tree of comments rooted at it.
+    // Fetch a given comment optionally along with a sub-tree of comments rooted at it.
     comment.get(auth, (req, res, next) => {
-        response(commentsOn(req.params.idNews).get(req.params.idComment), res, next);
+        const { get } = commentsOn(req.params.idNews);
+        response(get(req.params.idComment, req.query), res, next);
     });
 
     // Add new comment rooted at a given comment.
