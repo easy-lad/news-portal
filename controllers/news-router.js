@@ -1,6 +1,7 @@
-const express    = require('express');
-const tagsRouter = require('./tags-router.js');
-const response   = require('../utilities/response.js');
+const express        = require('express');
+const tagsRouter     = require('./tags-router.js');
+const commentsRouter = require('./comments-router.js');
+const response       = require('../utilities/response.js');
 
 
 function createRouter(NewsStore, authenticator, settings) {
@@ -10,7 +11,9 @@ function createRouter(NewsStore, authenticator, settings) {
 
     router.post('/login', auth.login);
     router.get('/logout', auth.logout);
+
     router.use('/tags', tagsRouter(store.tags, auth.pass), response.error404);
+    router.use(commentsRouter(store.commentsOn.bind(store), auth.pass));
 
     // Create
     router.post('/', auth.pass, (req, res, next) => {
