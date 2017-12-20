@@ -67,6 +67,10 @@ class NewsMemory extends NewsStore {
         return this.$promise(200, `Entry with SID=${sid} has been DELETED.`);
     }
 
+    commentsOn(sid) {
+        console.log(`STUB: NewsMemory#commentsOn(sid=${sid}) ...`);
+    }
+
     getEntry(sid) {
         const index = Number(sid) - 1;  // as the sid starts at 1 whereas arrays are zero-based
         const store = this._store;
