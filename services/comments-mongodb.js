@@ -22,8 +22,16 @@ class CommentsMongodb {
         console.log(`STUB: CommentsMongodb#_get(id=${id}) ...`);
     }
 
-    _add(promise, fields, user, id) {
-        console.log(`STUB: CommentsMongodb#_add(id=${id}) ...`);
+    _add(promise, fields, user, idParent) {
+        return promise.then((newsDoc) => {
+            const comment = { idRoot: newsDoc._id, body: fields.body, addedBy: user.id };
+
+            return !idParent ? this._addDoc(comment) : this._getDoc(idParent).then((parent) => {
+                comment.ancestors = parent.ancestors;
+                comment.ancestors.unshift(idParent);
+                return this._addDoc(comment);
+            });
+        });
     }
 
     _update(promise, fields, user, id) {
@@ -32,6 +40,13 @@ class CommentsMongodb {
 
     _remove(promise, user, id) {
         console.log(`STUB: CommentsMongodb#_remove(id=${id}) ...`);
+    }
+
+    _addDoc(comment) {
+        return this._ModelCommentEntry.create(comment).then((doc) => {
+            const message = `New comment with _ID=${doc._id} has been CREATED.`;
+            return response(201, message);
+        });
     }
 
     _getDoc(id) {
