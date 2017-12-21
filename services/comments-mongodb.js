@@ -35,7 +35,16 @@ class CommentsMongodb {
     }
 
     _update(promise, fields, user, id) {
-        console.log(`STUB: CommentsMongodb#_update(id=${id}) ...`);
+        return promise.then(() => this._getDoc(id).then((doc) => {
+            doc.editedBy = user.id;
+            doc.editDate = Date.now();
+            fields.body !== undefined && (doc.body = fields.body);
+
+            return doc.save().then((sDoc) => {
+                const message = `Comment with _ID=${sDoc._id} has been UPDATED.`;
+                return response(200, message);
+            });
+        }));
     }
 
     _remove(promise, user, id) {
