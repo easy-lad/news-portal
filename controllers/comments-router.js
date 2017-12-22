@@ -9,7 +9,7 @@ function createRouter(commentsOn, auth) {
 
     // Fetch a comment tree rooted at a given news entry.
     comments.get(auth, (req, res, next) => {
-        response(commentsOn(req.params.idNews).get(), res, next);
+        response(commentsOn(req.params.idNews).get(req.query), res, next);
     });
 
     // Add new comment rooted at a given news entry.
@@ -25,7 +25,7 @@ function createRouter(commentsOn, auth) {
     // Fetch a given comment optionally along with a sub-tree of comments rooted at it.
     comment.get(auth, (req, res, next) => {
         const { get } = commentsOn(req.params.idNews);
-        response(get(req.params.idComment, req.query), res, next);
+        response(get(req.query, req.params.idComment), res, next);
     });
 
     // Add new comment rooted at a given comment.
