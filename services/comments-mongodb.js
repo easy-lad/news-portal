@@ -18,8 +18,21 @@ class CommentsMongodb {
         };
     }
 
-    _get(promise, id) {
-        console.log(`STUB: CommentsMongodb#_get(id=${id}) ...`);
+    _get(promise, urlQuery, id) {
+        return promise.then((newsDoc) => {
+            const query = { idRoot: newsDoc._id, deleteDate: null };
+
+            if (id) {
+                if (!('single' in urlQuery)) {
+                    query.$or = [{ _id: id }, { ancestors: id }];
+                }
+                else query._id = id;
+            }
+            const mQuery = this._ModelCommentEntry.find(query, '-idRoot -__v');
+            const sort = `${'sortAsc' in urlQuery ? '' : '-'}addDate`;
+
+            return mQuery.sort(sort).lean().exec().then(docs => response(200, docs));
+        });
     }
 
     _add(promise, fields, user, idParent) {
