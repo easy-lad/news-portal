@@ -48,7 +48,14 @@ class CommentsMongodb {
     }
 
     _remove(promise, user, id) {
-        console.log(`STUB: CommentsMongodb#_remove(id=${id}) ...`);
+        return promise.then((newsDoc) => {
+            const query = { idRoot: newsDoc._id, deleteDate: null };
+
+            return !id ? this._removeDocs(query, user) : this._getDoc(id).then((doc) => {
+                query.$or = [{ _id: doc._id }, { ancestors: doc._id }];
+                return this._removeDocs(query, user);
+            });
+        });
     }
 
     _addDoc(comment) {
@@ -64,6 +71,18 @@ class CommentsMongodb {
         return this._ModelCommentEntry.find(query).exec().then((docs) => {
             if (!docs.length) throw response(404, `No comment with _ID=${id} is found.`);
             return docs[0];
+        });
+    }
+
+    _removeDocs(query, user) {
+        const update = { $set: { deletedBy: user.id }, $currentDate: { deleteDate: true } };
+
+        return this._ModelCommentEntry.updateMany(query, update).exec().then((result) => {
+            if (result.ok) {
+                const n = result.nModified;
+                return response(200, n ? `${n} comment(s) have been DELETED.` : 'No comments are found.');
+            }
+            throw new Error(`update operation has failed: n=${result.n}; nModified=${result.nModified}.`);
         });
     }
 }
