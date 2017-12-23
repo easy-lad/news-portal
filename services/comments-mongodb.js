@@ -35,20 +35,21 @@ class CommentsMongodb {
         });
     }
 
-    _add(promise, fields, user, idParent) {
+    _add(promise, fields, user, id) {
         return promise.then((newsDoc) => {
-            const comment = { idRoot: newsDoc._id, body: fields.body, addedBy: user.id };
+            const idNews = newsDoc._id;
+            const comment = { idRoot: idNews, body: fields.body, addedBy: user.id };
 
-            return !idParent ? this._addDoc(comment) : this._getDoc(idParent).then((parent) => {
+            return !id ? this._addDoc(comment) : this._getDoc(id, idNews).then((parent) => {
                 comment.ancestors = parent.ancestors;
-                comment.ancestors.unshift(idParent);
+                comment.ancestors.unshift(parent._id);
                 return this._addDoc(comment);
             });
         });
     }
 
     _update(promise, fields, user, id) {
-        return promise.then(() => this._getDoc(id).then((doc) => {
+        return promise.then(newsDoc => this._getDoc(id, newsDoc._id).then((doc) => {
             doc.editedBy = user.id;
             doc.editDate = Date.now();
             fields.body !== undefined && (doc.body = fields.body);
@@ -62,9 +63,10 @@ class CommentsMongodb {
 
     _remove(promise, user, id) {
         return promise.then((newsDoc) => {
-            const query = { idRoot: newsDoc._id, deleteDate: null };
+            const idNews = newsDoc._id;
+            const query = { idRoot: idNews, deleteDate: null };
 
-            return !id ? this._removeDocs(query, user) : this._getDoc(id).then((doc) => {
+            return !id ? this._removeDocs(query, user) : this._getDoc(id, idNews).then((doc) => {
                 query.$or = [{ _id: doc._id }, { ancestors: doc._id }];
                 return this._removeDocs(query, user);
             });
@@ -78,11 +80,13 @@ class CommentsMongodb {
         });
     }
 
-    _getDoc(id) {
-        const query = { _id: id, deleteDate: null };
+    _getDoc(idComment, idNews) {
+        const query = { _id: idComment, idRoot: idNews, deleteDate: null };
 
         return this._ModelCommentEntry.find(query).exec().then((docs) => {
-            if (!docs.length) throw response(404, `No comment with _ID=${id} is found.`);
+            if (!docs.length) {
+                throw response(404, `News entry with _ID=${idNews} has no comment with _ID=${idComment}.`);
+            }
             return docs[0];
         });
     }
