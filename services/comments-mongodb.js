@@ -58,7 +58,10 @@ class CommentsMongodb {
             const mQuery = this._ModelCommentEntry.find(query, '-idRoot -__v');
             const sort = `${'sortAsc' in urlQuery ? '' : '-'}addDate`;
 
-            return mQuery.sort(sort).lean().exec().then(docs => response(200, docs));
+            return mQuery.sort(sort).lean().exec().then((docs) => {
+                const output = 'linear' in urlQuery ? docs : CommentsMongodb.linearToNested(docs);
+                return response(200, output);
+            });
         });
     }
 
