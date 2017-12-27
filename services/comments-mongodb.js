@@ -9,6 +9,33 @@ class CommentsMongodb {
         this._ModelCommentEntry = connection.model('CommentEntry', CommentsMongodb.SCHEMA_COMMENT_ENTRY);
     }
 
+    static linearToNested(row) {
+        /*
+         *  The array below will hold isolated sub-tries of comments. Each such a sub-tree is rooted
+         *  at a distinct top-level comment directly posted on a given news entry. While all of them
+         *  pertain to the same news entry, comments from the different sub-tries do not have common
+         *  ancestor in the "ancestors" field as we intentionally keep there only _ids of comments,
+         *  whereas _id of the news entry document that resides in a separate collection is stored
+         *  in the dedicated field "idRoot". Thus, we separate the _ids as I do not know for sure if
+         *  MongoDB guaranties the uniqueness of ObjectIDs across a collections.
+         *  Another case is when we fetch a certain comment (not necessarily a top-level one) along
+         *  with a sub-tree of comments rooted at it. Here, the array will hold only that sub-tree.
+         */
+        const clusters = [];
+        const map = new Map();
+
+        row.forEach((comment) => {  // The map populated here will be used below
+            comment.comments = [];  // to quickly look up a comment by its _id serving as the key.
+            map.set(String(comment._id), comment);
+        });
+        row.forEach((comment) => {                        // By using array methods forEach() and
+            const parent = String(comment.ancestors[0]);  // push() we preserve the sorting order
+            delete comment.ancestors;                     // of comments in the resulting hierarchy.
+            (map.has(parent) ? map.get(parent).comments : clusters).push(comment);
+        });
+        return clusters;
+    }
+
     methods(promise) {
         return {
             get   : this._get.bind(this, promise),
