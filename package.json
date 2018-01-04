@@ -1,21 +1,21 @@
 {
-  "name": "news-portal",
+  "name": "news-portal-server",
   "version": "1.0.0",
-  "description": "web server to store/view a news records",
+  "description": "Node.js server that provides a RESTful API to access news stores.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/easy-lad/news-portal.git"
+    "url": "git+https://github.com/easy-lad/news-portal-server.git"
   },
   "author": "Denis",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/easy-lad/news-portal/issues"
+    "url": "https://github.com/easy-lad/news-portal-server/issues"
   },
-  "homepage": "https://github.com/easy-lad/news-portal#readme",
+  "homepage": "https://github.com/easy-lad/news-portal-server#readme",
   "dependencies": {
     "connect-mongo": "^2.0.0",
     "express": "^4.16.2",
