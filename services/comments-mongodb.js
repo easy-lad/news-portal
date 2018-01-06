@@ -36,6 +36,27 @@ class CommentsMongodb {
         return clusters;
     }
 
+    static lookupStage(query, newsField, outField) {
+        return {
+            $lookup: {
+                from    : this.SCHEMA_COMMENT_ENTRY.get('collection'),
+                as      : outField,
+                /*
+                 *  Since the $match stage of the pipeline below cannot directly access a field
+                 *  of a document entered the $lookup stage, we first have to define a variable
+                 *  "root" assigning it the _id of the current news document and then can reference
+                 *  it within the $match.
+                 */
+                let     : { root: `$${newsField}._id` },
+                pipeline: [
+                    { $match: { deleteDate: null, $expr: { $eq: ['$idRoot', '$$root'] } } },
+                    { $sort: { addDate: 'sortAsc' in query ? 1 : -1 } },
+                    { $project: { idRoot: 0, __v: 0 } }
+                ]
+            }
+        };
+    }
+
     methods(promise) {
         return {
             get   : this._get.bind(this, promise),
@@ -144,6 +165,6 @@ CommentsMongodb.SCHEMA_COMMENT_ENTRY = new mongoose.Schema({
     editedBy  : String,
     deleteDate: Date,
     deletedBy : String
-});
+}, { collection: 'commentEntries' });
 
 module.exports = CommentsMongodb;
