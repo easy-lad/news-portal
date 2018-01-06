@@ -28,8 +28,6 @@ class NewsMongodb extends NewsStore {
 
     get(urlQuery) {
         const query = { deleteDate: null };
-        const projection = 'short' in urlQuery ? '_id sid title summary' : '-__v';  // inclusive and exclusive projections
-        const sorting = `${'sortAsc' in urlQuery ? '' : '-'}addDate`;
 
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
         'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
@@ -39,13 +37,50 @@ class NewsMongodb extends NewsStore {
         this.addQueryDate(urlQuery, 'addDate', query);
         this.addQueryDate(urlQuery, 'editDate', query);
 
+        const sort = { addDate: 'sortAsc' in urlQuery ? 1 : -1 };
         const size = Number(urlQuery.pageSize) || 10;
         const offset = Number(urlQuery.pageOffset) || 0;
-        const mQuery = this._ModelNewsEntry.find(query, projection).skip(offset).limit(size);
+        const project = 'short' in urlQuery ? { sid: 1, title: 1, summary: 1 } : { __v: 0 };
+        const addComments = !('short' in urlQuery) && 'comments' in urlQuery;
 
-        return mQuery.sort(sorting).lean().exec().then((docs) => {
-            const handler = count => this.$promise(200, { page: docs, totalEntries: count });
-            return this._ModelNewsEntry.count(query).exec().then(handler);
+        const pipeline = [
+            { $match: query },                 // We use the $facet with 2 sub-pipelines in order to
+            { $facet: {                        // obtain both the total number of entries matching
+                total: [{ $count: 'count' }],  // the query criteria and a page of them through a
+                news : [                       // single aggregation request to MongoDB server.
+                    { $sort: sort },
+                    { $limit: offset + size }, // Putting the $limit immediately after the $sort
+                    { $skip: offset },         // allows to reduce RAM usage at the sorting stage.
+                    { $project: project }
+                ]
+            } },
+            /*  In order not to face the "BSON Document Size" limit, we return news entries
+             *  as array of documents rather than embedded within a single document.
+             *  Owing to preserveNullAndEmptyArrays:true, the $unwind always outputs at least one
+             *  document even in the cases when either no entries match the query criteria or the
+             *  specified offset is greater than or equal to the total number of matched entries.
+             */
+            { $unwind: { path: '$news', preserveNullAndEmptyArrays: true } }
+        ];
+        if (addComments) {
+            pipeline.push(CommentsMongodb.lookupStage(urlQuery, 'news', 'comments'));
+        }
+
+        return this._ModelNewsEntry.aggregate(pipeline).exec().then((docs) => {
+            const page = [];
+            const totalEntries = docs[0].total.length && docs[0].total[0].count;
+
+            if ('news' in docs[0]) {
+                const linear = 'linear' in urlQuery;
+                docs.forEach((doc) => {
+                    if (addComments) {
+                        const row = doc.comments;
+                        doc.news.comments = linear ? row : CommentsMongodb.linearToNested(row);
+                    }
+                    page.push(doc.news);
+                });
+            }
+            return this.$promise(200, { totalEntries, page });
         });
     }
 
@@ -93,10 +128,17 @@ class NewsMongodb extends NewsStore {
 
     addQueryId(input, query) {
         let key = null;
-        const id = typeof input === 'object' ? input.id : input;
+        let id = typeof input === 'object' ? input.id : input;
 
         if (typeof id === 'string') {
-            key = id.length === 24 ? '_id' : 'sid';
+            if (id.length === 24) {
+                key = '_id';
+                id = mongoose.Types.ObjectId(id);
+            }
+            else {
+                key = 'sid';
+                id = Number(id);
+            }
             query[key] = id;
         }
         return key;
@@ -131,13 +173,15 @@ class NewsMongodb extends NewsStore {
     }
 
     parseDate(string) {
+        let date;
         try {
-            string = (new Date(string)).toISOString();
+            date = new Date(string);
+            date.toISOString();
         }
         catch (error) {
             this.$throw(400, `Date string "${string}" could not be parsed due to ${error.name}:${error.message}.`);
         }
-        return string;
+        return date;
     }
 
     getDoc(id) {
