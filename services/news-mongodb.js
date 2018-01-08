@@ -32,10 +32,10 @@ class NewsMongodb extends NewsStore {
         'addedBy' in urlQuery && (query.addedBy = urlQuery.addedBy);
         'editedBy' in urlQuery && (query.editedBy = urlQuery.editedBy);
 
-        this.addQueryId(urlQuery, query);
-        this.addQueryTags(urlQuery, query);
-        this.addQueryDate(urlQuery, 'addDate', query);
-        this.addQueryDate(urlQuery, 'editDate', query);
+        this._addQueryId(urlQuery, query);
+        this._addQueryTags(urlQuery, query);
+        this._addQueryDate(urlQuery, 'addDate', query);
+        this._addQueryDate(urlQuery, 'editDate', query);
 
         const sort = { addDate: 'sortAsc' in urlQuery ? 1 : -1 };
         const size = Number(urlQuery.pageSize) || 10;
@@ -98,7 +98,7 @@ class NewsMongodb extends NewsStore {
     }
 
     update(id, fields, user) {
-        return this.getDoc(id).then((doc) => {
+        return this._getDoc(id).then((doc) => {
             this.$updateEntry(doc, fields);
             doc.editedBy = user.id;
             doc.editDate = Date.now();
@@ -111,7 +111,7 @@ class NewsMongodb extends NewsStore {
     }
 
     remove(id, user) {
-        return this.getDoc(id).then((doc) => {
+        return this._getDoc(id).then((doc) => {
             doc.deletedBy = user.id;
             doc.deleteDate = Date.now();
 
@@ -123,10 +123,10 @@ class NewsMongodb extends NewsStore {
     }
 
     commentsOn(id) {
-        return this._comments.methods(this.getDoc(id));
+        return this._comments.methods(this._getDoc(id));
     }
 
-    addQueryId(input, query) {
+    _addQueryId(input, query) {
         let key = null;
         let id = typeof input === 'object' ? input.id : input;
 
@@ -144,7 +144,7 @@ class NewsMongodb extends NewsStore {
         return key;
     }
 
-    addQueryTags(urlQuery, outQuery) {
+    _addQueryTags(urlQuery, outQuery) {
         let tags = urlQuery.tag;
 
         if (typeof tags === 'string' ? (tags = [tags]) : Array.isArray(tags)) {
@@ -152,27 +152,27 @@ class NewsMongodb extends NewsStore {
         }
     }
 
-    addQueryDate(urlQuery, key, outQuery) {
+    _addQueryDate(urlQuery, key, outQuery) {
         const clause = {};
         let gDate;
         let lDate;
 
         if ((gDate = urlQuery[`${key}Gte`])) {
-            clause.$gte = this.parseDate(gDate);
+            clause.$gte = this._parseDate(gDate);
         }
         else if ((gDate = urlQuery[`${key}Gt`])) {
-            clause.$gt = this.parseDate(gDate);
+            clause.$gt = this._parseDate(gDate);
         }
         if ((lDate = urlQuery[`${key}Lte`])) {
-            clause.$lte = this.parseDate(lDate);
+            clause.$lte = this._parseDate(lDate);
         }
         else if ((lDate = urlQuery[`${key}Lt`])) {
-            clause.$lt = this.parseDate(lDate);
+            clause.$lt = this._parseDate(lDate);
         }
         if (gDate || lDate) outQuery[key] = clause;
     }
 
-    parseDate(string) {
+    _parseDate(string) {
         let date;
         try {
             date = new Date(string);
@@ -184,9 +184,9 @@ class NewsMongodb extends NewsStore {
         return date;
     }
 
-    getDoc(id) {
+    _getDoc(id) {
         const query = { deleteDate: null };
-        const idKey = this.addQueryId(id, query);
+        const idKey = this._addQueryId(id, query);
 
         return this._ModelNewsEntry.find(query).exec().then((docs) => {
             if (!docs.length) this.$throw(404, `No news entry with ${idKey.toUpperCase()}=${id} is found.`);
