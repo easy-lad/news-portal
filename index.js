@@ -1,3 +1,4 @@
+const path          = require('path');
 const express       = require('express');
 const NewsMemory    = require('./services/news-memory.js');
 const NewsMongodb   = require('./services/news-mongodb.js');
@@ -9,19 +10,26 @@ const port   = 8888;
 const server = express();
 
 const settingsMemory = {
-    news: { users: 'users.yaml', entries: [{ title: 'test: Memory', summary: 'created for test purposes', who: 'server' }] },
+    news: {
+        users  : path.join(__dirname, 'config', 'users.json'),
+        entries: [{ title: 'test: Memory', summary: 'created for test purposes', who: 'server' }]
+    },
     auth: { session: { store: 'connect-mongo', port: 8008, dbName: 'loginSessions', collName: 'newsMemory' } }
 };
 const settingsMemory2 = {
-    news: { users: 'users.json', entries: [{ title: 'test: Memory2', summary: 'created for test purposes', who: 'server' }] }
+    news: {
+        users  : path.join(__dirname, 'config', 'users.json'),
+        entries: [{ title: 'test: Memory2', summary: 'created for test purposes', who: 'server' }]
+    }
 };
 
 const settingsMongo = {
     news: { port: 8008, dbName: 'newsPortal' },
     auth: { session: { store: 'connect-mongo', port: 8008, dbName: 'loginSessions', collName: 'newsMongo' } }
 };
-const settingsMongo2 = { news: { port: 8008, dbName: 'newsPortal2' } };
-
+const settingsMongo2 = {
+    news: { port: 8008, dbName: 'newsPortal2' }
+};
 
 // Using built-in middlewares to parse requests body contents in JSON and URL-encoded formats.
 server.use('/api/news', express.json());
